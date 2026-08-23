@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎈 英語單字大冒險 🎈</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --primary: #FF6B6B;
+      --primary-hover: #FF5252;
+      --secondary: #4ECDC4;
+      --accent: #FFE66D;
+      --bg: #E8F5E9;
+      --card-bg: #FFFFFF;
+      --text: #2F3E46;
+      --success: #2ECC71;
+      --error: #FF4757;
+    }
+
+    * { box-sizing: border-box; font-family: 'Comic Sans MS', 'Chalkboard SE', '微軟正黑體', sans-serif; }
+
+    body {
+      background-color: var(--bg);
+      background-image: radial-gradient(#A5D6A7 2px, transparent 2px);
+      background-size: 24px 24px;
+      color: var(--text);
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .container {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 520px;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 12px 0px #C8E6C9, 0 16px 28px rgba(0, 0, 0, 0.1);
+      border: 4px solid #81C784;
+      position: relative;
+    }
+
+    .player-profile {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #FFF9C4;
+      border: 2px solid #FFE082;
+      padding: 8px 12px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      gap: 4px;
+    }
+
+    .xp-bar-container {
+      width: 55px;
+      height: 10px;
+      background: #E0E0E0;
+      border-radius: 6px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 2px;
+    }
+
+    .xp-bar { height: 100%; background: #FF9800; width: 0%; transition: width 0.3s; }
+
+    .btn-top-group { display: flex; gap: 4px; }
+
+    .btn-top {
+      color: white; border: none; border-radius: 12px; padding: 6px 8px;
+      font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: all 0.1s;
+    }
+    .btn-top:active { transform: translateY(2px); }
+    .btn-badge-top { background: #9B59B6; box-shadow: 0 3px 0px #8E44AD; }
+    .btn-dict-top { background: #27AE60; box-shadow: 0 3px 0px #1E8449; }
+
+    h1 {
+      text-align: center; margin: 0 0 16px 0; color: var(--primary);
+      font-size: 1.8rem; text-shadow: 2px 2px 0px var(--accent);
+    }
+
+    .mascot-box {
+      display: flex; align-items: center; gap: 12px; background: #E1F5FE;
+      border: 2px solid #81D4FA; padding: 10px 14px; border-radius: 18px;
+      margin-bottom: 16px; cursor: pointer; user-select: none; position: relative;
+    }
+
+    .mascot-avatar {
+      font-size: 2.5rem; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .mascot-avatar.pop-success { animation: mascotPop 0.6s ease-in-out; }
+
+    @keyframes mascotPop {
+      0% { transform: scale(1) rotate(0deg); }
+      30% { transform: scale(1.6) rotate(-15deg); }
+      60% { transform: scale(1.4) rotate(15deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+
+    .mascot-bubble { font-weight: bold; color: #0277BD; font-size: 0.95rem; }
+
+    .mascot-selector-wrapper { display: flex; gap: 6px; justify-content: center; margin-top: 6px; flex-wrap: wrap; }
+    .mascot-opt-btn {
+      background: #FFF; border: 2px solid #E0E0E0; border-radius: 12px;
+      font-size: 1.4rem; padding: 4px 6px; cursor: pointer; transition: all 0.15s;
+    }
+    .mascot-opt-btn.active { border-color: var(--primary); background: #FFEEEF; box-shadow: 0 3px 0px var(--primary); }
+
+    .form-group { margin-bottom: 14px; }
+    label { display: block; margin-bottom: 6px; font-weight: bold; color: #388E3C; }
+
+    select {
+      width: 100%; padding: 10px; border-radius: 14px; border: 3px solid #A5D6A7;
+      font-size: 1rem; outline: none; background-color: #F1F8E9; font-weight: bold; color: var(--text);
+    }
+
+    .btn {
+      width: 100%; padding: 12px; background: var(--primary); color: white;
+      border: none; border-radius: 16px; font-size: 1.15rem; font-weight: bold;
+      cursor: pointer; box-shadow: 0 6px 0px #D63031; transition: all 0.1s ease; margin-top: 8px;
+    }
+    .btn:hover { background: var(--primary-hover); }
+    .btn:active { transform: translateY(4px); box-shadow: 0 2px 0px #D63031; }
+
+    .btn-quit { background: #FF9F43; box-shadow: 0 4px 0px #EE5253; padding: 10px; font-size: 0.95rem; margin-top: 16px; }
+    .btn-quit:hover { background: #EE5253; }
+
+    .btn-review { background: #FFA502; box-shadow: 0 6px 0px #CC8E00; margin-bottom: 8px; }
+    .btn-hint { background: #20BF6B; box-shadow: 0 4px 0px #26DE81; padding: 8px; font-size: 0.95rem; margin-top: 6px; }
+
+    .quit-note { text-align: center; font-size: 0.8rem; color: #888; margin-top: 4px; font-weight: bold; }
+
+    .header-bar {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+      font-weight: bold; font-size: 1rem; background: #E8F8F5; padding: 8px 14px;
+      border-radius: 12px; border: 2px dashed var(--secondary);
+    }
+
+    .combo-badge {
+      color: #E67E22; font-weight: 900; animation: pulse 0.8s infinite alternate;
+    }
+    @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
+
+    .question-box {
+      background: #FFF9C4; border-radius: 20px; padding: 20px 16px; text-align: center;
+      margin-bottom: 16px; border: 3px solid #FFF59D; box-shadow: 0 6px 0px #FFEE58;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+    }
+
+    .prompt-text { font-size: 1.9rem; font-weight: bold; color: #D35400; word-break: break-word; }
+
+    .speaker-btn {
+      background: var(--accent); border: 2px solid #F1C40F; border-radius: 50%;
+      width: 44px; height: 44px; font-size: 1.4rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 0px #F39C12;
+    }
+    .speaker-btn:active { transform: translateY(2px); box-shadow: 0 2px 0px #F39C12; }
+
+    .options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .option-btn {
+      padding: 12px; background: #FFF; border: 3px solid #E0E0E0; border-radius: 16px;
+      font-size: 1.1rem; font-weight: bold; cursor: pointer; text-align: center;
+      box-shadow: 0 4px 0px #BDBDBD; color: #333;
+    }
+    .option-btn:hover { border-color: var(--secondary); background: #E0F2F1; }
+
+    .spelling-box { display: flex; flex-direction: column; gap: 10px; }
+    .spelling-input {
+      padding: 12px; font-size: 1.3rem; border: 3px solid #A5D6A7; border-radius: 16px;
+      text-align: center; outline: none; letter-spacing: 2px; font-weight: bold;
+    }
+
+    .feedback { margin-top: 12px; text-align: center; font-weight: bold; font-size: 1.2rem; min-height: 28px; }
+    .correct { color: var(--success); }
+    .incorrect { color: var(--error); }
+    .hidden { display: none !important; }
+
+    .results-box { text-align: center; padding: 10px 0; }
+    .score-display { font-size: 3.2rem; color: var(--primary); font-weight: bold; margin: 8px 0; text-shadow: 2px 2px 0px var(--accent); }
+
+    .wrong-list-container {
+      margin: 14px 0; text-align: left; background: #FFEBEE; border: 2px solid #FFCDD2;
+      border-radius: 16px; padding: 12px; max-height: 160px; overflow-y: auto;
+    }
+    .wrong-list-title { font-weight: bold; color: var(--error); margin-bottom: 6px; }
+    .wrong-item { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #EF9A9A; font-size: 0.95rem; }
+
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 999;
+    }
+    .modal-content {
+      background: white; border-radius: 20px; border: 4px solid #81C784; padding: 20px;
+      width: 90%; max-width: 460px; max-height: 85vh; overflow-y: auto; position: relative;
+    }
+    .modal-title { font-size: 1.4rem; font-weight: bold; color: #8E44AD; text-align: center; margin-bottom: 12px; }
+
+    .dict-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+    .dict-tab-btn {
+      flex: 1; padding: 8px 4px; border: 2px solid #A5D6A7; border-radius: 10px;
+      background: #F1F8E9; font-weight: bold; font-size: 0.85rem; cursor: pointer; color: var(--text);
+    }
+    .dict-tab-btn.active { background: #27AE60; color: white; border-color: #1E8449; }
+
+    .dict-search-input {
+      width: 100%; padding: 8px 12px; border-radius: 10px; border: 2px solid #CBD5E0;
+      font-size: 0.95rem; outline: none; margin-bottom: 12px;
+    }
+
+    .dict-word-grid { display: grid; grid-template-columns: 1fr; gap: 8px; max-height: 320px; overflow-y: auto; }
+    .dict-card {
+      display: flex; justify-content: space-between; align-items: center; padding: 10px 14px;
+      border-radius: 12px; border: 2px solid #E2E8F0; background: #F8FAFC;
+    }
+    .dict-card-en { font-weight: bold; font-size: 1.1rem; color: var(--primary); }
+    .dict-card-zh { color: #4A5568; font-size: 0.95rem; }
+    .dict-card-action { display: flex; align-items: center; gap: 8px; }
+    .dict-audio-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; }
+
+    .badge-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .badge-card { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; border: 2px solid #E0E0E0; background: #F9F9F9; opacity: 0.6; }
+    .badge-card.unlocked { opacity: 1; background: #FFFDE7; border-color: #FBC02D; box-shadow: 0 4px 0px #FDD835; }
+    .badge-card-icon { font-size: 2.2rem; }
+    .badge-card-info { text-align: left; }
+    .badge-card-name { font-weight: bold; font-size: 1.05rem; color: #333; }
+    .badge-card-desc { font-size: 0.85rem; color: #666; margin-top: 2px; }
+    .badge-card-status { font-size: 0.8rem; font-weight: bold; color: #E67E22; margin-top: 4px; }
+    .badge-card.unlocked .badge-card-status { color: #27AE60; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="player-profile">
+      <span>🔥 <span id="streak-days">1</span>天</span>
+      <span>⭐ LV.<span id="player-level">1</span>
+        <div class="xp-bar-container"><div class="xp-bar" id="xp-bar"></div></div>
+      </span>
+      <div class="btn-top-group">
+        <button class="btn-top btn-dict-top" id="open-dict-modal-btn">📖 單字庫</button>
+        <button class="btn-top btn-badge-top" id="open-badge-modal-btn">🏆 成就館</button>
+      </div>
+    </div>
+
+    <div class="mascot-box" id="mascot-interactive-box">
+      <div class="mascot-avatar" id="mascot-avatar">🐱</div>
+      <div class="mascot-bubble" id="mascot-text">準備好了嗎？點擊 🔊 可以聽發音喔！</div>
+    </div>
+
+    <h1>🎈 英語單字大冒險 🎈</h1>
+
+    <div id="setup-screen">
+      <div class="form-group">
+        <label>🐾 選擇你的吉祥物夥伴：</label>
+        <div class="mascot-selector-wrapper" id="mascot-selector">
+          <button class="mascot-opt-btn" data-icon="🐱" data-name="小貓咪">🐱</button>
+          <button class="mascot-opt-btn" data-icon="🐶" data-name="小柴犬">🐶</button>
+          <button class="mascot-opt-btn" data-icon="🐰" data-name="粉紅兔">🐰</button>
+          <button class="mascot-opt-btn" data-icon="🐻" data-name="小熊熊">🐻</button>
+          <button class="mascot-opt-btn" data-icon="🐧" data-name="小企鵝">🐧</button>
+          <button class="mascot-opt-btn" data-icon="🐷" data-name="小豬豬">🐷</button>
+          <button class="mascot-opt-btn" data-icon="🐸" data-name="小青蛙">🐸</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="grade-select">🎯 選擇挑戰題庫：</label>
+        <select id="grade-select">
+          <optgroup label="🌟 校園課程單字">
+            <option value="all">全校園混合挑戰</option>
+            <option value="grade1">一年級</option>
+            <option value="grade2">二年級</option>
+            <option value="grade3">三年級</option>
+            <option value="grade4">四年級</option>
+            <option value="grade5">五年級</option>
+            <option value="grade6">六年級</option>
+          </optgroup>
+          <optgroup label="🏆 小學英檢 (GEPT Kids)">
+            <option value="gept_all">小學英檢 - 完整題庫</option>
+            <option value="gept_easy">小學英檢 - 基礎單字</option>
+            <option value="gept_hard">小學英檢 - 進階單字</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="mode-select">🎮 選擇玩法模式：</label>
+        <select id="mode-select">
+          <option value="choice-en-zh">📖 看英文選中文 (+10 XP)</option>
+          <option value="choice-zh-en">🔤 看中文選英文 (+10 XP)</option>
+          <option value="listening">🎧 聽力大考驗 (聽發音選英文 +10 XP)</option>
+          <option value="spelling">✍️ 小英雄拼字大考驗 (雙倍 +20 XP!)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="count-select">🔢 題目數量：</label>
+        <select id="count-select">
+          <option value="10">10 題 (快速挑戰)</option>
+          <option value="20">20 題 (標準挑戰)</option>
+          <option value="50">50 題 (大師挑戰)</option>
+        </select>
+      </div>
+
+      <button class="btn" id="start-btn">🚀 開始冒險！</button>
+    </div>
+
+    <div id="game-screen" class="hidden">
+      <div class="header-bar">
+        <span>⭐ 進度：<span id="current-index">1</span>/<span id="total-count">10</span></span>
+        <span id="combo-display-box" class="combo-badge hidden">🔥 Combo x<span id="combo-count">0</span></span>
+        <span>🏆 得分：<span id="score">0</span></span>
+      </div>
+
+      <div class="question-box">
+        <div class="prompt-text" id="prompt-display">---</div>
+        <button class="speaker-btn" id="speak-btn" title="聽發音">🔊</button>
+      </div>
+
+      <div id="choice-container" class="options-grid"></div>
+
+      <div id="spelling-container" class="spelling-box hidden">
+        <input type="text" id="spelling-input" class="spelling-input" placeholder="在這裡拼出英文單字..." autocomplete="off">
+        <button class="btn btn-hint" id="hint-btn">💡 使用提示 (-2分)</button>
+        <button class="btn" id="submit-spelling-btn">✨ 送出答案</button>
+      </div>
+
+      <div id="feedback" class="feedback"></div>
+
+      <button class="btn btn-quit" id="quit-game-btn">🏠 中途返回主選單</button>
+      <div class="quit-note">⚠️ 說明：中途離開本次答對單字將不計入成就與已學會總庫喔！</div>
+    </div>
+
+    <div id="result-screen" class="hidden">
+      <div class="results-box">
+        <h2>🎉 冒險完成！ 🎉</h2>
+        <p>你的最終得分：</p>
+        <div class="score-display" id="final-score">0</div>
+
+        <div id="wrong-list-box" class="wrong-list-container hidden">
+          <div class="wrong-list-title">📝 需要再加油的單字（共 <span id="wrong-count">0</span> 個）：</div>
+          <div id="wrong-list-items"></div>
+        </div>
+
+        <button class="btn btn-review hidden" id="review-btn">🔥 針對錯題重新練習</button>
+        <button class="btn" id="restart-btn">🏠 返回主選單</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="dict-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-title">📖 探索單字總庫 📖</div>
+      <div class="dict-tabs">
+        <button class="dict-tab-btn active" data-tab="school">🏫 學校單字</button>
+        <button class="dict-tab-btn" data-tab="gept">🏆 小學英檢</button>
+        <button class="dict-tab-btn" data-tab="mastered">🌟 我已學會 (<span id="mastered-count-badge">0</span>)</button>
+      </div>
+
+      <div id="dict-sub-grade-box" class="form-group">
+        <select id="dict-grade-select">
+          <option value="grade1">一年級單字</option>
+          <option value="grade2">二年級單字</option>
+          <option value="grade3">三年級單字</option>
+          <option value="grade4">四年級單字</option>
+          <option value="grade5">五年級單字</option>
+          <option value="grade6">六年級單字</option>
+        </select>
+      </div>
+
+      <input type="text" id="dict-search-input" class="dict-search-input" placeholder="🔍 搜尋英文或中文單字..." autocomplete="off">
+      <div class="dict-word-grid" id="dict-word-grid"></div>
+      <button class="btn" id="close-dict-modal-btn" style="margin-top: 16px;">關閉單字庫</button>
+    </div>
+  </div>
+
+  <div id="badge-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-title">🏆 我的成就徽章館 🏆</div>
+      <div class="badge-grid" id="badge-modal-grid"></div>
+      <button class="btn" id="close-badge-modal-btn" style="margin-top: 16px;">關閉成就館</button>
+    </div>
+  </div>
+
+  <script>
+    const schoolWords = {
+      "grade1": [{"en":"apple","zh":"蘋果"},{"en":"ant","zh":"螞蟻"},{"en":"boy","zh":"男孩"},{"en":"ball","zh":"球"},{"en":"cat","zh":"貓"},{"en":"candy","zh":"糖果"},{"en":"dog","zh":"狗"},{"en":"door","zh":"門口"},{"en":"egg","zh":"蛋"},{"en":"fox","zh":"狐狸"},{"en":"fish","zh":"魚"},{"en":"girl","zh":"女孩"},{"en":"hat","zh":"帽子"},{"en":"ink","zh":"墨水"},{"en":"jam","zh":"果醬"},{"en":"jump","zh":"跳躍"},{"en":"kid","zh":"孩子"},{"en":"kite","zh":"風箏"},{"en":"lion","zh":"獅子"},{"en":"lake","zh":"湖泊"},{"en":"map","zh":"地圖"},{"en":"net","zh":"網子"},{"en":"nose","zh":"鼻子"},{"en":"ox","zh":"公牛"},{"en":"pig","zh":"豬"},{"en":"queen","zh":"皇后"},{"en":"robot","zh":"機器人"},{"en":"rope","zh":"繩子"},{"en":"run","zh":"跑"},{"en":"sun","zh":"太陽"},{"en":"tiger","zh":"老虎"},{"en":"toy","zh":"玩具"},{"en":"up","zh":"向上"},{"en":"vest","zh":"背心"},{"en":"van","zh":"廂型車"},{"en":"water","zh":"水"},{"en":"box","zh":"箱子"},{"en":"six","zh":"六"},{"en":"yo-yo","zh":"溜溜球"},{"en":"zoo","zh":"動物園"}],
+      "grade2": [{"en":"food","zh":"食物"},{"en":"juice","zh":"果汁"},{"en":"cookie","zh":"餅乾"},{"en":"milk","zh":"牛奶"},{"en":"hot dog","zh":"熱狗"},{"en":"cake","zh":"蛋糕"},{"en":"rice","zh":"飯"},{"en":"one","zh":"一"},{"en":"two","zh":"二"},{"en":"pizza","zh":"比薩"},{"en":"four","zh":"四"},{"en":"five","zh":"五"},{"en":"six","zh":"六"},{"en":"ten","zh":"十"},{"en":"baby","zh":"嬰兒"},{"en":"father","zh":"爸爸"},{"en":"mother","zh":"媽媽"},{"en":"city","zh":"城市"},{"en":"bank","zh":"銀行"},{"en":"hotel","zh":"旅館"},{"en":"park","zh":"公園"},{"en":"sea","zh":"大海"},{"en":"lake","zh":"湖泊"},{"en":"road","zh":"道路"},{"en":"tree","zh":"樹木"},{"en":"color","zh":"顏色"},{"en":"red","zh":"紅色"},{"en":"pink","zh":"粉紅色"},{"en":"green","zh":"綠色"},{"en":"blue","zh":"藍色"},{"en":"cup","zh":"杯子"},{"en":"dish","zh":"盤子"},{"en":"fork","zh":"叉子"},{"en":"desk","zh":"書桌"},{"en":"card","zh":"卡片"},{"en":"bag","zh":"袋子"},{"en":"gift","zh":"禮物"},{"en":"kite","zh":"風箏"},{"en":"book","zh":"書本"},{"en":"body","zh":"身體"},{"en":"nose","zh":"鼻子"},{"en":"ear","zh":"耳朵"},{"en":"eye","zh":"眼睛"},{"en":"face","zh":"臉龐"},{"en":"leg","zh":"腿部"},{"en":"hand","zh":"手部"},{"en":"head","zh":"頭部"},{"en":"arm","zh":"手臂"},{"en":"shoe","zh":"鞋子"},{"en":"coat","zh":"大衣"},{"en":"how","zh":"如何"},{"en":"what","zh":"什麼"},{"en":"why","zh":"為什麼"},{"en":"fan","zh":"電風扇"},{"en":"name","zh":"名字"},{"en":"song","zh":"歌曲"},{"en":"hot","zh":"熱的"},{"en":"cold","zh":"冷的"},{"en":"taxi","zh":"計程車"},{"en":"sad","zh":"悲傷的"},{"en":"happy","zh":"快樂的"},{"en":"sorry","zh":"抱歉的"},{"en":"lazy","zh":"懶惰的"},{"en":"shy","zh":"害羞的"},{"en":"sick","zh":"生病的"},{"en":"lucky","zh":"幸運的"},{"en":"cute","zh":"可愛的"},{"en":"safe","zh":"安全的"},{"en":"new","zh":"新的"},{"en":"old","zh":"舊的/老的"},{"en":"dry","zh":"乾燥的"},{"en":"short","zh":"矮的/短的"},{"en":"fast","zh":"快速的"},{"en":"late","zh":"遲到的"},{"en":"all","zh":"全部"},{"en":"cook","zh":"烹飪/廚師"},{"en":"feel","zh":"感覺"},{"en":"cry","zh":"哭泣"},{"en":"see","zh":"看見"},{"en":"wash","zh":"清洗"},{"en":"play","zh":"遊玩/播放"},{"en":"sing","zh":"唱歌"},{"en":"swim","zh":"游泳"},{"en":"jog","zh":"慢跑"},{"en":"run","zh":"奔跑"},{"en":"kick","zh":"踢"},{"en":"open","zh":"開啟"},{"en":"like","zh":"喜歡"},{"en":"come","zh":"前來"},{"en":"go","zh":"前往"},{"en":"eat","zh":"進食"},{"en":"drink","zh":"飲用"},{"en":"ant","zh":"螞蟻"},{"en":"bear","zh":"熊"},{"en":"cat","zh":"貓"},{"en":"elf","zh":"小精靈"},{"en":"fish","zh":"魚"},{"en":"goat","zh":"山羊"},{"en":"tiger","zh":"老虎"},{"en":"lion","zh":"獅子"}],
+      "grade3": [{"en":"food","zh":"食物"},{"en":"menu","zh":"菜單"},{"en":"coffee","zh":"咖啡"},{"en":"juice","zh":"果汁"},{"en":"cookie","zh":"餅乾"},{"en":"milk","zh":"牛奶"},{"en":"pork","zh":"豬肉"},{"en":"beef","zh":"牛肉"},{"en":"snack","zh":"點心"},{"en":"hot dog","zh":"熱狗"},{"en":"cake","zh":"蛋糕"},{"en":"butter","zh":"奶油"},{"en":"fruit","zh":"水果"},{"en":"orange","zh":"柳橙"},{"en":"banana","zh":"香蕉"},{"en":"rice","zh":"飯"},{"en":"salad","zh":"沙拉"},{"en":"candy","zh":"糖果"},{"en":"pizza","zh":"比薩"},{"en":"cheese","zh":"乳酪"},{"en":"dinner","zh":"晚餐"},{"en":"lunch","zh":"午餐"},{"en":"number","zh":"號碼"},{"en":"one","zh":"一"},{"en":"two","zh":"二"},{"en":"three","zh":"三"},{"en":"four","zh":"四"},{"en":"five","zh":"五"},{"en":"six","zh":"六"},{"en":"seven","zh":"七"},{"en":"nine","zh":"九"},{"en":"ten","zh":"十"},{"en":"baby","zh":"嬰兒"},{"en":"sister","zh":"姐妹"},{"en":"brother","zh":"兄弟"},{"en":"father","zh":"爸爸"},{"en":"mother","zh":"媽媽"},{"en":"friend","zh":"朋友"},{"en":"boss","zh":"老闆"},{"en":"nurse","zh":"護士"},{"en":"robot","zh":"機器人"},{"en":"city","zh":"城市"},{"en":"bank","zh":"銀行"},{"en":"school","zh":"學校"},{"en":"bookstore","zh":"書店"},{"en":"shop","zh":"商店"},{"en":"hotel","zh":"旅館"},{"en":"classroom","zh":"教室"},{"en":"bedroom","zh":"臥室"},{"en":"bathroom","zh":"浴室"},{"en":"garden","zh":"花園"},{"en":"park","zh":"公園"},{"en":"sea","zh":"海、海洋"},{"en":"beach","zh":"海灘"},{"en":"river","zh":"河流"},{"en":"lake","zh":"湖泊"},{"en":"road","zh":"路"},{"en":"street","zh":"街道"},{"en":"grass","zh":"草"},{"en":"flower","zh":"花"},{"en":"tree","zh":"樹"},{"en":"color","zh":"顏色"},{"en":"white","zh":"白色"},{"en":"yellow","zh":"黃色"},{"en":"red","zh":"紅色"},{"en":"pink","zh":"粉紅色"},{"en":"green","zh":"綠色"},{"en":"brown","zh":"咖啡色"},{"en":"black","zh":"黑色"},{"en":"blue","zh":"藍色"},{"en":"glass","zh":"玻璃杯"},{"en":"cup","zh":"杯子"},{"en":"bowl","zh":"碗"},{"en":"dish","zh":"盤子"},{"en":"spoon","zh":"湯匙"},{"en":"knife","zh":"刀子"},{"en":"fork","zh":"叉子"},{"en":"desk","zh":"書桌"},{"en":"chair","zh":"椅子"},{"en":"card","zh":"卡片"},{"en":"bag","zh":"袋子"},{"en":"chalk","zh":"粉筆"},{"en":"marker","zh":"白板筆/麥克筆"},{"en":"school bag","zh":"書包"},{"en":"eraser","zh":"橡皮擦"},{"en":"homework","zh":"家庭作業"},{"en":"window","zh":"窗戶"},{"en":"gift","zh":"禮物"},{"en":"kite","zh":"風箏"},{"en":"doll","zh":"洋娃娃"},{"en":"book","zh":"書"},{"en":"body","zh":"身體"},{"en":"nose","zh":"鼻子"},{"en":"ear","zh":"耳朵"},{"en":"eye","zh":"眼睛"},{"en":"face","zh":"臉"},{"en":"leg","zh":"腿"},{"en":"mouth","zh":"嘴巴"},{"en":"knee","zh":"膝蓋"},{"en":"neck","zh":"頸部"},{"en":"finger","zh":"手指"},{"en":"hand","zh":"手"},{"en":"head","zh":"頭"},{"en":"arm","zh":"手臂"},{"en":"skirt","zh":"裙子"},{"en":"dress","zh":"洋裝"},{"en":"sock","zh":"短襪"},{"en":"shirt","zh":"襯衫"},{"en":"shoe","zh":"鞋子"},{"en":"pants","zh":"褲子"},{"en":"quiz","zh":"小考"},{"en":"math","zh":"數學"},{"en":"how","zh":"如何"},{"en":"who","zh":"誰"},{"en":"what","zh":"什麼"},{"en":"fan","zh":"電風扇"},{"en":"radio","zh":"收音機"},{"en":"piano","zh":"鋼琴"},{"en":"e-mail","zh":"電子郵件"},{"en":"story","zh":"故事"},{"en":"song","zh":"歌曲"},{"en":"hot","zh":"熱的"},{"en":"cool","zh":"涼的"},{"en":"cold","zh":"冷的"},{"en":"warm","zh":"溫暖的"},{"en":"sunny","zh":"晴朗的"},{"en":"taxi","zh":"計程車"},{"en":"clean","zh":"乾淨的"},{"en":"dirty","zh":"髒的"},{"en":"sad","zh":"悲傷的"},{"en":"happy","zh":"快樂的"},{"en":"sorry","zh":"抱歉的"},{"en":"lazy","zh":"懶惰的"},{"en":"shy","zh":"害羞的"},{"en":"sick","zh":"生病的"},{"en":"lucky","zh":"幸運的"},{"en":"cute","zh":"可愛的"},{"en":"sure","zh":"確定的"},{"en":"safe","zh":"安全的"},{"en":"new","zh":"新的"},{"en":"old","zh":"老的、舊的"},{"en":"same","zh":"相同的"},{"en":"dry","zh":"乾燥的"},{"en":"short","zh":"矮的、短的"},{"en":"fast","zh":"快的"},{"en":"slow","zh":"慢的"},{"en":"late","zh":"遲到"},{"en":"right","zh":"右邊"},{"en":"left","zh":"左邊"},{"en":"date","zh":"日期"},{"en":"today","zh":"今天"},{"en":"Monday","zh":"星期一"},{"en":"Friday","zh":"星期五"},{"en":"Sunday","zh":"星期日"},{"en":"all","zh":"全部"},{"en":"buy","zh":"買"},{"en":"cook","zh":"煮、廚師"},{"en":"cry","zh":"哭泣"},{"en":"see","zh":"看"},{"en":"read","zh":"讀"},{"en":"name","zh":"名字"},{"en":"play","zh":"玩"},{"en":"sing","zh":"唱"},{"en":"swim","zh":"游泳"},{"en":"dance","zh":"跳舞"},{"en":"jump","zh":"跳、跳躍"},{"en":"run","zh":"跑"},{"en":"kick","zh":"踢"},{"en":"watch","zh":"看、手錶"},{"en":"pull","zh":"拉"},{"en":"push","zh":"推"},{"en":"open","zh":"打開"},{"en":"want","zh":"想要"},{"en":"like","zh":"喜歡"},{"en":"come","zh":"來"},{"en":"go","zh":"去"},{"en":"eat","zh":"吃"},{"en":"drink","zh":"喝"},{"en":"sleep","zh":"睡覺"},{"en":"walk","zh":"走路"},{"en":"birthday","zh":"生日"},{"en":"morning","zh":"早上"},{"en":"afternoon","zh":"下午"},{"en":"evening","zh":"傍晚"},{"en":"night","zh":"夜晚"},{"en":"sheep","zh":"綿羊"},{"en":"mouse","zh":"老鼠"},{"en":"elephant","zh":"大象"},{"en":"rabbit","zh":"兔子"},{"en":"monkey","zh":"猴子"},{"en":"snake","zh":"蛇"},{"en":"ant","zh":"螞蟻"},{"en":"bear","zh":"熊"},{"en":"cat","zh":"貓"},{"en":"elf","zh":"小精靈"},{"en":"fish","zh":"魚"},{"en":"goat","zh":"山羊"},{"en":"tiger","zh":"老虎"},{"en":"lion","zh":"獅子"},{"en":"horse","zh":"馬"}],
+      "grade4": [{"en":"agree","zh":"同意"},{"en":"airplane","zh":"飛機"},{"en":"answer","zh":"答案、回答"},{"en":"arm","zh":"手臂"},{"en":"baby","zh":"嬰兒"},{"en":"bakery","zh":"麵包店"},{"en":"bank","zh":"銀行"},{"en":"beach","zh":"海灘"},{"en":"beef","zh":"牛肉"},{"en":"belt","zh":"腰帶、帶子"},{"en":"bite","zh":"咬、啃"},{"en":"blind","zh":"瞎的、盲的"},{"en":"boat","zh":"船、小船"},{"en":"boss","zh":"老闆"},{"en":"bowl","zh":"碗"},{"en":"brown","zh":"咖啡色"},{"en":"busy","zh":"忙、忙碌"},{"en":"butter","zh":"奶油"},{"en":"chalk","zh":"粉筆"},{"en":"cheap","zh":"便宜的"},{"en":"cheese","zh":"乳酪"},{"en":"church","zh":"教堂"},{"en":"circle","zh":"圓、圓圈"},{"en":"city","zh":"城市"},{"en":"climb","zh":"爬、攀爬"},{"en":"coffee","zh":"咖啡"},{"en":"copy","zh":"影印、拷貝"},{"en":"count","zh":"數數、計算"},{"en":"crazy","zh":"瘋狂的"},{"en":"cry","zh":"哭泣"},{"en":"dark","zh":"黑暗的"},{"en":"date","zh":"日期"},{"en":"dozen","zh":"一打"},{"en":"driver","zh":"司機"},{"en":"dry","zh":"乾燥的、乾的"},{"en":"elf","zh":"小精靈"},{"en":"e-mail","zh":"電子郵件"},{"en":"fan","zh":"電風扇"},{"en":"farmer","zh":"農夫"},{"en":"fast","zh":"快的"},{"en":"Father's Day","zh":"父親節"},{"en":"fax","zh":"傳真"},{"en":"finger","zh":"手指"},{"en":"fork","zh":"叉子"},{"en":"garden","zh":"花園"},{"en":"gift","zh":"禮物"},{"en":"glass","zh":"玻璃杯"},{"en":"glove","zh":"手套"},{"en":"goat","zh":"山羊"},{"en":"grass","zh":"草"},{"en":"gray","zh":"灰色"},{"en":"ground","zh":"地面"},{"en":"habit","zh":"習慣"},{"en":"history","zh":"歷史"},{"en":"holiday","zh":"假日"},{"en":"horse","zh":"馬"},{"en":"hot dog","zh":"熱狗"},{"en":"hotel","zh":"旅館"},{"en":"hurt","zh":"受傷、危害"},{"en":"jacket","zh":"夾克"},{"en":"jeans","zh":"牛仔褲"},{"en":"jog","zh":"慢跑"},{"en":"jump","zh":"跳躍"},{"en":"kick","zh":"踢"},{"en":"knee","zh":"膝蓋"},{"en":"knife","zh":"刀子"},{"en":"lake","zh":"湖泊"},{"en":"lazy","zh":"懶惰的"},{"en":"left","zh":"左邊"},{"en":"lonely","zh":"孤獨的、單獨的"},{"en":"lucky","zh":"幸運的"},{"en":"menu","zh":"菜單"},{"en":"Mother's Day","zh":"母親節"},{"en":"movie","zh":"電影"},{"en":"museum","zh":"博物館"},{"en":"neck","zh":"頸部"},{"en":"north","zh":"北方、北方的"},{"en":"office","zh":"辦公室"},{"en":"page","zh":"頁,頁數"},{"en":"pants","zh":"褲子"},{"en":"pet","zh":"寵物"},{"en":"picnic","zh":"郊遊、野餐"},{"en":"popcorn","zh":"爆玉米花"},{"en":"pork","zh":"豬肉"},{"en":"pull","zh":"拉"},{"en":"push","zh":"推"},{"en":"quick","zh":"快的、快速的"},{"en":"quiet","zh":"安靜的、安靜"},{"en":"quiz","zh":"小考"},{"en":"radio","zh":"收音機"},{"en":"rainbow","zh":"彩虹"},{"en":"right","zh":"右邊"},{"en":"river","zh":"河流"},{"en":"road","zh":"路"},{"en":"run","zh":"跑"},{"en":"safe","zh":"安全的"},{"en":"salad","zh":"沙拉"},{"en":"salty","zh":"鹹的"},{"en":"same","zh":"相同的、一樣的"},{"en":"school bag","zh":"書包"},{"en":"season","zh":"季節"},{"en":"shape","zh":"形狀"},{"en":"share","zh":"分享"},{"en":"sheep","zh":"綿羊"},{"en":"ship","zh":"船"},{"en":"shirt","zh":"襯衫"},{"en":"shoe","zh":"鞋子"},{"en":"shop","zh":"商店"},{"en":"shy","zh":"害羞的"},{"en":"slow","zh":"慢的"},{"en":"smoke","zh":"吸煙、煙"},{"en":"snake","zh":"蛇"},{"en":"sock","zh":"短襪"},{"en":"song","zh":"歌曲"},{"en":"south","zh":"南方、南方的"},{"en":"speak","zh":"說話"},{"en":"spoon","zh":"湯匙"},{"en":"spring","zh":"春天"},{"en":"story","zh":"故事"},{"en":"street","zh":"街道"},{"en":"sugar","zh":"糖"},{"en":"summer","zh":"夏天"},{"en":"sweater","zh":"毛衣"},{"en":"swim","zh":"游泳"},{"en":"taxi","zh":"計程車"},{"en":"Teacher's Day","zh":"教師節"},{"en":"telephone","zh":"電話"},{"en":"thirsty","zh":"口渴的"},{"en":"truck","zh":"貨車"},{"en":"week","zh":"星期(週)"},{"en":"white","zh":"白色"},{"en":"window","zh":"窗戶"},{"en":"winter","zh":"冬天"},{"en":"young","zh":"年輕"},{"en":"Tuesday","zh":"星期二"},{"en":"twelve","zh":"十二"},{"en":"tired","zh":"疲倦的"},{"en":"today","zh":"今天"},{"en":"train","zh":"火車"},{"en":"tree","zh":"樹"},{"en":"two","zh":"二"},{"en":"walk","zh":"走路"},{"en":"want","zh":"想要、需要"},{"en":"smell","zh":"聞、氣味"},{"en":"some","zh":"一些"},{"en":"wash","zh":"清洗"},{"en":"watch","zh":"看、手錶"},{"en":"water","zh":"水"},{"en":"what","zh":"什麼"},{"en":"windy","zh":"多風的、有風的"},{"en":"write","zh":"寫"},{"en":"yellow","zh":"黃色"}],
+      "grade5": [{"en":"afraid","zh":"害怕的"},{"en":"agree","zh":"同意"},{"en":"airplane","zh":"飛機"},{"en":"almost","zh":"幾乎"},{"en":"always","zh":"總是"},{"en":"answer","zh":"答案、回答"},{"en":"arm","zh":"手臂"},{"en":"baby","zh":"嬰兒"},{"en":"bakery","zh":"麵包店"},{"en":"bank","zh":"銀行"},{"en":"beach","zh":"海灘"},{"en":"beautiful","zh":"美麗的"},{"en":"beef","zh":"牛肉"},{"en":"believe","zh":"相信"},{"en":"belt","zh":"腰帶、帶子"},{"en":"bite","zh":"咬、啃"},{"en":"blackboard","zh":"黑板"},{"en":"blind","zh":"瞎的、盲的"},{"en":"boat","zh":"小船"},{"en":"boss","zh":"老闆"},{"en":"bottle","zh":"瓶子"},{"en":"bowl","zh":"碗"},{"en":"bridge","zh":"橋樑"},{"en":"brown","zh":"咖啡色"},{"en":"businessman","zh":"商人"},{"en":"busy","zh":"忙、忙碌"},{"en":"butter","zh":"奶油"},{"en":"camera","zh":"相機"},{"en":"careful","zh":"小心的、仔細的"},{"en":"cell phone","zh":"手機"},{"en":"chalk","zh":"粉筆"},{"en":"cheap","zh":"便宜的"},{"en":"cheat","zh":"欺騙、作弊"},{"en":"cheese","zh":"乳酪"},{"en":"chopstick","zh":"筷子"},{"en":"church","zh":"教堂"},{"en":"circle","zh":"圓形、圈起來"},{"en":"city","zh":"城市"},{"en":"climb","zh":"爬、攀爬"},{"en":"coffee","zh":"咖啡"},{"en":"collect","zh":"收集"},{"en":"convenient","zh":"便利的"},{"en":"copy","zh":"影印、拷貝"},{"en":"couch","zh":"長沙發"},{"en":"count","zh":"數數、計算"},{"en":"country","zh":"鄉村、國家"},{"en":"crazy","zh":"瘋狂的"},{"en":"cry","zh":"哭泣"},{"en":"dangerous","zh":"危險的"},{"en":"dark","zh":"黑暗的"},{"en":"date","zh":"日期"},{"en":"daughter","zh":"女兒"},{"en":"decide","zh":"決定"},{"en":"delicious","zh":"美味的"},{"en":"department store","zh":"百貨公司"},{"en":"dictionary","zh":"字典"},{"en":"different","zh":"不同的"},{"en":"Double Tenth Day","zh":"雙十節"},{"en":"dozen","zh":"一打"},{"en":"driver","zh":"司機"},{"en":"dry","zh":"乾燥的、乾的"},{"en":"elf","zh":"小精靈"},{"en":"e-mail","zh":"電子郵件"},{"en":"excellent","zh":"傑出的、優秀的"},{"en":"excited","zh":"興奮的"},{"en":"expensive","zh":"昂貴的"},{"en":"factory","zh":"工廠"},{"en":"fan","zh":"電風扇"},{"en":"farmer","zh":"農夫"},{"en":"fast","zh":"快的"},{"en":"Father's Day","zh":"父親節"},{"en":"favorite","zh":"最愛的"},{"en":"fall","zh":"秋天"},{"en":"finally","zh":"最後、終於"},{"en":"finger","zh":"手指"},{"en":"fisherman","zh":"漁夫"},{"en":"foreigner","zh":"外國人"},{"en":"fork","zh":"叉子"},{"en":"garbage","zh":"垃圾"},{"en":"garden","zh":"花園"},{"en":"gift","zh":"禮物"},{"en":"glasses","zh":"眼鏡"},{"en":"glove","zh":"手套"},{"en":"goat","zh":"山羊"},{"en":"grass","zh":"草"},{"en":"gray","zh":"灰色"},{"en":"ground","zh":"地面"},{"en":"habit","zh":"習慣"},{"en":"Halloween","zh":"萬聖節"},{"en":"healthy","zh":"健康的"},{"en":"history","zh":"歷史"},{"en":"holiday","zh":"假日"},{"en":"honest","zh":"誠實的"},{"en":"horse","zh":"馬"},{"en":"hospital","zh":"醫院"},{"en":"hot dog","zh":"熱狗"},{"en":"hotel","zh":"旅館"},{"en":"hundred","zh":"百"},{"en":"hurt","zh":"受傷、危害"},{"en":"important","zh":"重要的"},{"en":"Internet","zh":"網際網路"},{"en":"island","zh":"島嶼"},{"en":"jacket","zh":"夾克"},{"en":"jeans","zh":"牛仔褲"},{"en":"jog","zh":"慢跑"},{"en":"zebra","zh":"斑馬"},{"en":"kick","zh":"踢"},{"en":"knee","zh":"膝蓋"},{"en":"knife","zh":"刀子"},{"en":"lake","zh":"湖泊"},{"en":"laugh","zh":"笑"},{"en":"lazy","zh":"懶惰的"},{"en":"left","zh":"左邊"},{"en":"library","zh":"圖書館"},{"en":"listen","zh":"聽"},{"en":"lonely","zh":"孤獨的"},{"en":"lucky","zh":"幸運的"},{"en":"machine","zh":"機器"},{"en":"medicine","zh":"藥"},{"en":"menu","zh":"菜單"},{"en":"minute","zh":"分鐘"},{"en":"mistake","zh":"錯誤"},{"en":"Moon Festival","zh":"中秋節"},{"en":"Mother's Day","zh":"母親節"},{"en":"money","zh":"金錢"},{"en":"mountain","zh":"山、山脈"},{"en":"movie","zh":"電影"},{"en":"museum","zh":"博物館"},{"en":"neck","zh":"頸部"},{"en":"New Year's Day","zh":"元旦"},{"en":"noodle","zh":"麵條"},{"en":"north","zh":"北方"},{"en":"office","zh":"辦公室"},{"en":"page","zh":"頁數"},{"en":"pants","zh":"褲子"},{"en":"parents","zh":"父母親"},{"en":"pet","zh":"寵物"},{"en":"picnic","zh":"野餐"},{"en":"picture","zh":"照片、圖畫"},{"en":"playground","zh":"操場"},{"en":"police station","zh":"警察局"},{"en":"popcorn","zh":"爆玉米花"},{"en":"popular","zh":"受歡迎的"},{"en":"pork","zh":"豬肉"},{"en":"post office","zh":"郵局"},{"en":"problem","zh":"問題"},{"en":"pull","zh":"拉"},{"en":"push","zh":"推"},{"en":"queen","zh":"皇后"},{"en":"quiet","zh":"安靜的"},{"en":"quiz","zh":"小考"},{"en":"radio","zh":"廣播"},{"en":"rainbow","zh":"彩虹"},{"en":"restaurant","zh":"餐廳"},{"en":"right","zh":"右邊、正確的"},{"en":"river","zh":"河流"},{"en":"road","zh":"路"},{"en":"run","zh":"跑"},{"en":"safe","zh":"安全的"},{"en":"salad","zh":"沙拉"},{"en":"salty","zh":"鹹的"},{"en":"same","zh":"相同的"},{"en":"student","zh":"學生"},{"en":"season","zh":"季節"},{"en":"shape","zh":"形狀"},{"en":"share","zh":"分享"},{"en":"sheep","zh":"綿羊"},{"en":"ship","zh":"大船"},{"en":"shirt","zh":"襯衫"},{"en":"shoe","zh":"鞋子"},{"en":"shop","zh":"商店"},{"en":"shopkeeper","zh":"店主"},{"en":"shoulder","zh":"肩膀"},{"en":"shy","zh":"害羞的"},{"en":"slow","zh":"慢的"},{"en":"smile","zh":"微笑"},{"en":"smoke","zh":"吸煙"},{"en":"snake","zh":"蛇"},{"en":"snowy","zh":"下雪的"},{"en":"sock","zh":"短襪"},{"en":"song","zh":"歌曲"},{"en":"sound","zh":"聲音"},{"en":"south","zh":"南方"},{"en":"speak","zh":"說話"},{"en":"spoon","zh":"湯匙"},{"en":"spring","zh":"春天、溫泉"},{"en":"story","zh":"故事"},{"en":"stranger","zh":"陌生人"},{"en":"street","zh":"街道"},{"en":"successful","zh":"成功的"},{"en":"sugar","zh":"糖"},{"en":"summer","zh":"夏天"},{"en":"supermarket","zh":"超級市場"},{"en":"surprised","zh":"感到驚訝的"},{"en":"sweater","zh":"毛衣"},{"en":"swim","zh":"游泳"},{"en":"Taiwan","zh":"台灣"},{"en":"taxi","zh":"計程車"},{"en":"Teacher's Day","zh":"教師節"},{"en":"telephone","zh":"電話"}],
+      "grade6": [{"en":"afternoon","zh":"下午"},{"en":"all","zh":"全部"},{"en":"angry","zh":"生氣"},{"en":"animal","zh":"動物"},{"en":"ant","zh":"螞蟻"},{"en":"ask","zh":"問"},{"en":"bag","zh":"袋子"},{"en":"banana","zh":"香蕉"},{"en":"baseball","zh":"棒球"},{"en":"basketball","zh":"籃球"},{"en":"bathroom","zh":"浴室"},{"en":"bear","zh":"熊"},{"en":"bedroom","zh":"臥室"},{"en":"birthday","zh":"生日"},{"en":"black","zh":"黑色"},{"en":"blue","zh":"藍色"},{"en":"bookstore","zh":"書店"},{"en":"breakfast","zh":"早餐"},{"en":"brother","zh":"兄弟"},{"en":"brush","zh":"刷子"},{"en":"bus","zh":"公車"},{"en":"buy","zh":"買"},{"en":"cake","zh":"蛋糕"},{"en":"candy","zh":"糖果"},{"en":"card","zh":"卡片"},{"en":"cat","zh":"貓"},{"en":"chair","zh":"椅子"},{"en":"chicken","zh":"雞肉"},{"en":"chocolate","zh":"巧克力"},{"en":"Christmas","zh":"聖誕節"},{"en":"classmate","zh":"同學"},{"en":"classroom","zh":"教室"},{"en":"clean","zh":"乾淨的"},{"en":"clothes","zh":"衣服"},{"en":"cloudy","zh":"多雲的"},{"en":"coat","zh":"大衣"},{"en":"cold","zh":"冷的"},{"en":"color","zh":"顏色"},{"en":"come","zh":"來"},{"en":"computer","zh":"電腦"},{"en":"cook","zh":"烹調、廚師"},{"en":"cookie","zh":"餅乾"},{"en":"cool","zh":"涼爽的"},{"en":"cup","zh":"杯子"},{"en":"cute","zh":"可愛的"},{"en":"dance","zh":"跳舞"},{"en":"desk","zh":"書桌"},{"en":"dinner","zh":"晚餐"},{"en":"dirty","zh":"骯髒"},{"en":"dishes","zh":"餐具"},{"en":"doctor","zh":"醫生"},{"en":"dodgeball","zh":"躲避球"},{"en":"doll","zh":"洋娃娃"},{"en":"dollar","zh":"元"},{"en":"door","zh":"門"},{"en":"dream","zh":"夢想"},{"en":"dress","zh":"洋裝"},{"en":"drink","zh":"喝"},{"en":"ear","zh":"耳朵"},{"en":"eat","zh":"吃"},{"en":"elephant","zh":"大象"},{"en":"eleven","zh":"十一"},{"en":"English","zh":"英文"},{"en":"eraser","zh":"橡皮擦"},{"en":"evening","zh":"傍晚"},{"en":"eye","zh":"眼睛"},{"en":"face","zh":"臉"},{"en":"family","zh":"家庭"},{"en":"feel","zh":"感覺"},{"en":"fish","zh":"魚"},{"en":"five","zh":"五"},{"en":"flower","zh":"花"},{"en":"food","zh":"食物"},{"en":"four","zh":"四"},{"en":"Friday","zh":"星期五"},{"en":"friend","zh":"朋友"},{"en":"fruit","zh":"水果"},{"en":"giraffe","zh":"長頸鹿"},{"en":"go","zh":"去"},{"en":"goodbye","zh":"再見"},{"en":"grandma","zh":"祖母"},{"en":"grandpa","zh":"祖父"},{"en":"great","zh":"美好的"},{"en":"green","zh":"綠色"},{"en":"guess","zh":"猜"},{"en":"hamburger","zh":"漢堡"},{"en":"hand","zh":"手"},{"en":"head","zh":"頭"},{"en":"help","zh":"幫助"},{"en":"hair","zh":"頭髮"},{"en":"hour","zh":"小時"},{"en":"homework","zh":"作業"},{"en":"hot","zh":"熱的"},{"en":"hungry","zh":"飢餓的"},{"en":"ice cream","zh":"冰淇淋"},{"en":"juice","zh":"果汁"},{"en":"jump","zh":"跳躍"},{"en":"kitchen","zh":"廚房"},{"en":"kite","zh":"風箏"},{"en":"late","zh":"遲到"},{"en":"leg","zh":"腿"},{"en":"like","zh":"喜歡"},{"en":"lion","zh":"獅子"},{"en":"living room","zh":"客廳"},{"en":"lunch","zh":"午餐"},{"en":"many","zh":"很多"},{"en":"marker","zh":"麥克筆"},{"en":"math","zh":"數學"},{"en":"milk","zh":"牛奶"},{"en":"Monday","zh":"星期一"},{"en":"monkey","zh":"猴子"},{"en":"morning","zh":"早上"},{"en":"mouse","zh":"老鼠"},{"en":"mouth","zh":"嘴巴"},{"en":"music","zh":"音樂"},{"en":"name","zh":"名字"},{"en":"new","zh":"新的"},{"en":"night","zh":"夜晚"},{"en":"notebook","zh":"筆記本"},{"en":"nose","zh":"鼻子"},{"en":"number","zh":"號碼"},{"en":"nurse","zh":"護士"},{"en":"old","zh":"老的"},{"en":"open","zh":"打開"},{"en":"orange","zh":"柳橙"},{"en":"park","zh":"公園"},{"en":"pencil case","zh":"鉛筆盒"},{"en":"piano","zh":"鋼琴"},{"en":"pink","zh":"粉紅色"},{"en":"pizza","zh":"比薩"},{"en":"play","zh":"玩"},{"en":"please","zh":"請"},{"en":"police officer","zh":"警察"},{"en":"purple","zh":"紫色"},{"en":"question","zh":"問題"},{"en":"rabbit","zh":"兔子"},{"en":"read","zh":"讀"},{"en":"red","zh":"紅色"},{"en":"restroom","zh":"廁所"},{"en":"rice","zh":"飯"},{"en":"robot","zh":"機器人"},{"en":"sad","zh":"悲傷的"},{"en":"sandwich","zh":"三明治"},{"en":"Saturday","zh":"星期六"},{"en":"school","zh":"學校"},{"en":"sea","zh":"大海"},{"en":"see","zh":"看"},{"en":"short","zh":"矮的"},{"en":"sick","zh":"生病的"},{"en":"sing","zh":"唱"},{"en":"skirt","zh":"裙子"},{"en":"sleep","zh":"睡覺"},{"en":"smell","zh":"聞"},{"en":"snack","zh":"點心"},{"en":"some","zh":"一些"},{"en":"sorry","zh":"抱歉的"},{"en":"Sunday","zh":"星期日"},{"en":"scooter","zh":"機車"},{"en":"ten","zh":"十"},{"en":"three","zh":"三"},{"en":"Thursday","zh":"星期四"},{"en":"tiger","zh":"老虎"},{"en":"tired","zh":"疲倦的"},{"en":"today","zh":"今天"},{"en":"train","zh":"火車"},{"en":"tree","zh":"樹"},{"en":"Tuesday","zh":"星期二"},{"en":"twelve","zh":"十二"},{"en":"two","zh":"二"},{"en":"walk","zh":"走路"},{"en":"want","zh":"想要"},{"en":"wash","zh":"清洗"},{"en":"watch","zh":"手錶/看"},{"en":"water","zh":"水"},{"en":"weather","zh":"天氣"},{"en":"Wednesday","zh":"星期三"},{"en":"what","zh":"什麼"},{"en":"windy","zh":"風大的"},{"en":"write","zh":"寫"},{"en":"yellow","zh":"黃色"},{"en":"television","zh":"電視"},{"en":"Thanksgiving","zh":"感恩節"},{"en":"thirsty","zh":"口渴的"},{"en":"thousand","zh":"千"},{"en":"tomorrow","zh":"明天"},{"en":"traffic","zh":"交通"},{"en":"train station","zh":"火車站"},{"en":"truck","zh":"貨車"},{"en":"typhoon","zh":"颱風"},{"en":"umbrella","zh":"雨傘"},{"en":"uniform","zh":"制服"},{"en":"vacation","zh":"假期"},{"en":"vegetable","zh":"蔬菜"},{"en":"week","zh":"星期"},{"en":"weekend","zh":"週末"},{"en":"white","zh":"白色"},{"en":"window","zh":"窗戶"},{"en":"winter","zh":"冬天"},{"en":"yesterday","zh":"昨天"},{"en":"young","zh":"年輕"}]
+    };
+
+    const geptWords = [
+      {"en":"actor","zh":"男演員"},{"en":"actress","zh":"女演員"},{"en":"airport","zh":"機場"},{"en":"art","zh":"美術、藝術"},{"en":"aunt","zh":"阿姨、姑姑"},{"en":"bee","zh":"蜜蜂"},{"en":"behind","zh":"在...後面"},{"en":"bicycle","zh":"腳踏車"},{"en":"bored","zh":"覺得無聊的"},{"en":"boring","zh":"令人無聊的"},{"en":"bread","zh":"麵包"},{"en":"bus stop","zh":"公車站"},{"en":"butterfly","zh":"蝴蝶"},{"en":"call","zh":"打電話"},{"en":"cap","zh":"棒球帽"},{"en":"cellphone","zh":"手機"},{"en":"Chinese","zh":"中文"},{"en":"chopsticks","zh":"筷子"},{"en":"clock","zh":"時鐘"},{"en":"coke","zh":"可樂"},{"en":"cousin","zh":"堂表兄弟姊妹"},{"en":"cow","zh":"乳牛"},{"en":"dad","zh":"爸爸"},{"en":"daddy","zh":"爸爸"},{"en":"dining room","zh":"餐廳"},{"en":"Dragon Boat Festival","zh":"端午節"},{"en":"draw","zh":"畫畫"},{"en":"drum","zh":"鼓"},{"en":"duck","zh":"鴨子"},{"en":"dumpling","zh":"水餃"},{"en":"early","zh":"早到的"},{"en":"Easter","zh":"復活節"},{"en":"easy","zh":"簡單的"},{"en":"eighteen","zh":"十八"},{"en":"eighty","zh":"八十"},{"en":"enjoy","zh":"享受、喜歡"},{"en":"every","zh":"每一個"},{"en":"exciting","zh":"令人興奮的"},{"en":"excuse me","zh":"不好意思"},{"en":"feet","zh":"腳(複數)"},{"en":"fifteen","zh":"十五"},{"en":"fifty","zh":"五十"},{"en":"find","zh":"尋找"},{"en":"fine","zh":"很好的"},{"en":"fire station","zh":"消防站"},{"en":"first","zh":"第一"},{"en":"floor","zh":"地板"},{"en":"fly","zh":"飛飛行"},{"en":"football","zh":"足球"},{"en":"fourteen","zh":"十四"},{"en":"free","zh":"免費的"},{"en":"French fries","zh":"薯條"},{"en":"fridge","zh":"電冰箱"},{"en":"frog","zh":"青蛙"},{"en":"full","zh":"飽的"},{"en":"fun","zh":"樂趣、有趣的"},{"en":"game","zh":"遊戲、比賽"},{"en":"get","zh":"得到、收到"},{"en":"give","zh":"給予"},{"en":"glue","zh":"膠水"},{"en":"grandfather","zh":"外公、爺爺"},{"en":"grandmother","zh":"外婆、奶奶"},{"en":"grape","zh":"葡萄"},{"en":"grow","zh":"成長長大"},{"en":"hard","zh":"困難的"},{"en":"have","zh":"有"},{"en":"headache","zh":"頭痛"},{"en":"heavy","zh":"重的"},{"en":"hello","zh":"哈囉"},{"en":"here","zh":"這裡"},{"en":"hi","zh":"嗨"},{"en":"high","zh":"高的"},{"en":"hike","zh":"健行"},{"en":"hippo","zh":"河馬"},{"en":"hit","zh":"打、碰撞"},{"en":"home","zh":"家、家庭"},{"en":"hope","zh":"希望"},{"en":"house","zh":"房子"},{"en":"hurry","zh":"趕快、急忙"},{"en":"in front of","zh":"在...前面"},{"en":"inside","zh":"在...裡面"},{"en":"interesting","zh":"有趣的"},{"en":"January","zh":"一月"},{"en":"February","zh":"二月"},{"en":"March","zh":"三月"},{"en":"April","zh":"四月"},{"en":"May","zh":"五月"},{"en":"June","zh":"六月"},{"en":"July","zh":"七月"},{"en":"August","zh":"八月"},{"en":"September","zh":"九月"},{"en":"October","zh":"十月"},{"en":"November","zh":"十一月"},{"en":"December","zh":"十二月"},{"en":"Japan","zh":"日本"},{"en":"job","zh":"工作職業"},{"en":"key","zh":"鑰匙"},{"en":"know","zh":"知道認識"},{"en":"koala","zh":"無尾熊"},{"en":"lamp","zh":"燈"},{"en":"last","zh":"最後的"},{"en":"lemon","zh":"檸檬"},{"en":"let's","zh":"讓我們"},{"en":"light","zh":"輕的"},{"en":"live","zh":"居住"},{"en":"long","zh":"長的"},{"en":"look","zh":"看、看起來"},{"en":"love","zh":"喜愛"},{"en":"mad","zh":"生氣的"},{"en":"mail","zh":"信件"},{"en":"mailman","zh":"郵差"},{"en":"make","zh":"做、製造"},{"en":"man","zh":"男人"},{"en":"maybe","zh":"也許"},{"en":"meal","zh":"一餐"},{"en":"meet","zh":"遇見、會面"},{"en":"men","zh":"男人(複數)"},{"en":"mice","zh":"老鼠(複數)"},{"en":"miss","zh":"想念"},{"en":"Miss","zh":"小姐"},{"en":"mom","zh":"媽媽"},{"en":"mommy","zh":"媽媽"},{"en":"month","zh":"月份"},{"en":"moon","zh":"月亮"},{"en":"mop","zh":"用拖把拖地"},{"en":"more","zh":"更多"},{"en":"motorcycle","zh":"摩托車"},{"en":"movie theater","zh":"電影院"},{"en":"Mr.","zh":"先生"},{"en":"Mrs.","zh":"太太"},{"en":"MRT","zh":"捷運"},{"en":"much","zh":"許多的"},{"en":"near","zh":"靠近"},{"en":"need","zh":"需要"},{"en":"never","zh":"不曾"},{"en":"next to","zh":"在...旁邊"},{"en":"nice","zh":"令人愉快的"},{"en":"nineteen","zh":"十九"},{"en":"ninety","zh":"九十"},{"en":"nothing","zh":"什麼都沒有"},{"en":"now","zh":"現在"},{"en":"o'clock","zh":"點鐘"},{"en":"only","zh":"僅有的"},{"en":"other","zh":"其他的"},{"en":"out","zh":"向外"},{"en":"outside","zh":"在...外面"},{"en":"over","zh":"在...上方"},{"en":"paint","zh":"用顏料畫"},{"en":"pair","zh":"一雙一對"},{"en":"panda","zh":"大貓熊"},{"en":"paper","zh":"紙張"},{"en":"parent","zh":"父母親"},{"en":"party","zh":"派對"},{"en":"PE","zh":"體育課"},{"en":"peach","zh":"桃子"},{"en":"pen","zh":"鋼筆"},{"en":"pencil","zh":"鉛筆"},{"en":"people","zh":"人(複數)"},{"en":"person","zh":"人"},{"en":"photo","zh":"照片"},{"en":"pick up","zh":"撿起、接人"},{"en":"pie","zh":"派"},{"en":"plane","zh":"飛機"},{"en":"pocket","zh":"口袋"},{"en":"pretty","zh":"漂亮的"},{"en":"pumpkin","zh":"南瓜"},{"en":"put","zh":"放置"},{"en":"rain","zh":"下雨"},{"en":"rainy","zh":"下雨的"},{"en":"ready","zh":"準備好的"},{"en":"really","zh":"真正地"},{"en":"refrigerator","zh":"電冰箱"},{"en":"ride","zh":"騎車"},{"en":"ruler","zh":"尺"},{"en":"sale","zh":"特價"},{"en":"say","zh":"說"},{"en":"science","zh":"科學"},{"en":"second","zh":"第二"},{"en":"seventeen","zh":"十七"},{"en":"seventy","zh":"七十"},{"en":"shelf","zh":"架子"},{"en":"shorts","zh":"短褲"},{"en":"show","zh":"展示"},{"en":"shower","zh":"淋浴"},{"en":"singer","zh":"歌手"},{"en":"sit","zh":"坐下"},{"en":"sixteen","zh":"十六"},{"en":"sixty","zh":"六十"},{"en":"sky","zh":"天空"},{"en":"small","zh":"小的"},{"en":"smart","zh":"聰明的"},{"en":"snow","zh":"雪、下雪"},{"en":"soccer","zh":"美式足球"},{"en":"sofa","zh":"沙發"},{"en":"soldier","zh":"軍人"},{"en":"sometimes","zh":"有時候"},{"en":"son","zh":"兒子"},{"en":"soup","zh":"湯"},{"en":"spell","zh":"拼寫"},{"en":"spider","zh":"蜘蛛"},{"en":"sport","zh":"運動"},{"en":"stand","zh":"站立"},{"en":"star","zh":"星星"},{"en":"start","zh":"開始"},{"en":"station","zh":"車站"},{"en":"still","zh":"仍然"},{"en":"stop","zh":"停下來"},{"en":"store","zh":"商店"},{"en":"strawberry","zh":"草莓"},{"en":"strong","zh":"強壯的"},{"en":"study","zh":"學習"},{"en":"sunny","zh":"晴朗的"},{"en":"sweep","zh":"掃地"},{"en":"sweet","zh":"甜的"},{"en":"table","zh":"桌子"},{"en":"take","zh":"拿取"},{"en":"talk","zh":"談話"},{"en":"tall","zh":"高的"},{"en":"taste","zh":"嚐起來"},{"en":"tea","zh":"茶"},{"en":"teacher","zh":"老師"},{"en":"teeth","zh":"牙齒(複數)"},{"en":"tell","zh":"告訴"},{"en":"test","zh":"考試"},{"en":"thank","zh":"感謝"},{"en":"then","zh":"然後"},{"en":"there","zh":"那裡"},{"en":"these","zh":"這些"},{"en":"thin","zh":"瘦的"},{"en":"thing","zh":"東西"},{"en":"third","zh":"第三"},{"en":"thirteen","zh":"十三"},{"en":"thirty","zh":"三十"},{"en":"those","zh":"那些"},{"en":"ticket","zh":"票"},{"en":"time","zh":"時間"},{"en":"together","zh":"一起"},{"en":"too","zh":"也、太"},{"en":"tooth","zh":"牙齒"},{"en":"toothache","zh":"牙痛"},{"en":"touch","zh":"觸碰"},{"en":"towel","zh":"毛巾"},{"en":"trip","zh":"旅行"},{"en":"try","zh":"嘗試"},{"en":"T-shirt","zh":"T恤"},{"en":"turn","zh":"轉彎"},{"en":"turtle","zh":"烏龜"},{"en":"TV","zh":"電視"},{"en":"twenty","zh":"二十"},{"en":"UK","zh":"英國"},{"en":"uncle","zh":"叔叔舅舅"},{"en":"under","zh":"在...下方"},{"en":"USA","zh":"美國"},{"en":"usually","zh":"通常"},{"en":"very","zh":"非常"},{"en":"wait","zh":"等待"},{"en":"waiter","zh":"男服務生"},{"en":"waitress","zh":"女服務生"},{"en":"wake","zh":"喚醒"},{"en":"wall","zh":"牆壁"},{"en":"watermelon","zh":"西瓜"},{"en":"way","zh":"道路方向"},{"en":"wear","zh":"穿戴"},{"en":"welcome","zh":"歡迎"},{"en":"well","zh":"健康的"},{"en":"wet","zh":"潮濕的"},{"en":"whale","zh":"鯨魚"},{"en":"when","zh":"何時"},{"en":"where","zh":"在哪裡"},{"en":"which","zh":"哪一個"},{"en":"whose","zh":"誰的"},{"en":"will","zh":"將會"},{"en":"win","zh":"贏得"},{"en":"wind","zh":"風"},{"en":"with","zh":"和...一起"},{"en":"woman","zh":"女人"},{"en":"women","zh":"女人(複數)"},{"en":"wonderful","zh":"精彩的"},{"en":"word","zh":"字"},{"en":"work","zh":"工作"},{"en":"worker","zh":"工作者"},{"en":"worry","zh":"擔心"},{"en":"year","zh":"年份"},{"en":"yes","zh":"是的"},{"en":"you","zh":"你、你們"},{"en":"your","zh":"你的"},{"en":"yummy","zh":"美味的"},{"en":"zero","zh":"零"}
+    ];
+
+    const badgeDefinitions = {
+      "first": { icon: "🎓", name: "踏出第一步", desc: "完成第一次單字挑戰" },
+      "streak3": { icon: "🌱", name: "習慣養成", desc: "連續登入滿 3 天" },
+      "streak7": { icon: "⚡", name: "週連霸達人", desc: "連續登入滿 7 天" },
+      "streak10": { icon: "🔥", name: "雙位數成就", desc: "連續登入滿 10 天" },
+      "streak30": { icon: "👑", name: "單字月冠軍", desc: "連續登入滿 30 天" },
+      "streak50": { icon: "🛡️", name: "半百堅持", desc: "連續登入滿 50 天" },
+      "streak100": { icon: "💯", name: "百日大師", desc: "連續登入滿 100 天" },
+      "streak200": { icon: "🚀", name: "雙百極限", desc: "連續登入滿 200 天" },
+      "streak365": { icon: "🏆", name: "全勤年度傳奇", desc: "連續登入滿 365 天" },
+      "spelling": { icon: "✍️", name: "拼字小英雄", desc: "拼字練習模式獲得 80 分以上" },
+      "master50": { icon: "🏅", name: "單字小達人", desc: "累積答對 50 道題目" },
+      "master200": { icon: "🌟", name: "知識傳奇", desc: "累積答對 200 道題目" },
+      "schoolGrand": { icon: "🏫", name: "學校單字大滿貫", desc: "學校 1-6 年級單字全部答對解鎖" },
+      "geptGrand": { icon: "🏆", name: "英檢單字大滿貫", desc: "小學英檢所有單字全部答對解鎖" }
+    };
+
+    const mascotPhrases = [
+      "Hello! Great to see you!",
+      "You are doing awesome today!",
+      "Never give up, keep going!",
+      "Super star! You got this!",
+      "Practice makes perfect!",
+      "You are getting smarter every day!"
+    ];
+
+    const mascotPraisePhrases = [
+      "Awesome!", "Super!", "Great job!", "Fantastic!", "Amazing!", "Keep it up!"
+    ];
+
+    let pData = JSON.parse(localStorage.getItem('kids_eng_game_v7')) || {
+      xp: 0, level: 1, streak: 1, lastLogin: '', correctTotal: 0,
+      badges: {
+        first: false, streak3: false, streak7: false, streak10: false, streak30: false,
+        streak50: false, streak100: false, streak200: false, streak365: false,
+        spelling: false, master50: false, master200: false, schoolGrand: false, geptGrand: false
+      },
+      wrongMemory: {},
+      seenWords: {},
+      masteredWords: {},
+      selectedMascot: { icon: "🐱", name: "小貓咪" }
+    };
+
+    let comboCount = 0; // 當前連續答對 Combo 題數
+
+    function savePlayerData() {
+      localStorage.setItem('kids_eng_game_v7', JSON.stringify(pData));
+      updateProfileUI();
+    }
+
+    function checkDailyStreak() {
+      const today = new Date().toDateString();
+      if (pData.lastLogin !== today) {
+        if (pData.lastLogin) {
+          const last = new Date(pData.lastLogin);
+          const diff = Math.floor((new Date() - last) / (1000 * 60 * 60 * 24));
+          pData.streak = (diff === 1) ? pData.streak + 1 : 1;
+        }
+        pData.lastLogin = today;
+        savePlayerData();
+      }
+    }
+
+    function addXP(amount) {
+      pData.xp += amount;
+      const nextLevelXP = pData.level * 50;
+      if (pData.xp >= nextLevelXP) {
+        pData.xp -= nextLevelXP;
+        pData.level++;
+        triggerMascotAnimation(pData.selectedMascot.icon, `Level Up! 你升級到 LV.${pData.level} 囉！`);
+      }
+      savePlayerData();
+    }
+
+    function updateProfileUI() {
+      document.getElementById('streak-days').textContent = pData.streak;
+      document.getElementById('player-level').textContent = pData.level;
+      const nextXP = pData.level * 50;
+      document.getElementById('xp-bar').style.width = Math.min(100, (pData.xp / nextXP) * 100) + '%';
+
+      const masteredCount = Object.keys(pData.masteredWords).length;
+      document.getElementById('mastered-count-badge').textContent = masteredCount;
+
+      if (pData.streak >= 3) pData.badges.streak3 = true;
+      if (pData.streak >= 7) pData.badges.streak7 = true;
+      if (pData.streak >= 10) pData.badges.streak10 = true;
+      if (pData.streak >= 30) pData.badges.streak30 = true;
+      if (pData.streak >= 50) pData.badges.streak50 = true;
+      if (pData.streak >= 100) pData.badges.streak100 = true;
+      if (pData.streak >= 200) pData.badges.streak200 = true;
+      if (pData.streak >= 365) pData.badges.streak365 = true;
+      if (pData.correctTotal >= 50) pData.badges.master50 = true;
+      if (pData.correctTotal >= 200) pData.badges.master200 = true;
+
+      let allSchoolCount = 0;
+      Object.values(schoolWords).forEach(l => allSchoolCount += l.length);
+      let masteredSchoolCount = 0;
+      Object.values(schoolWords).forEach(l => {
+        l.forEach(w => { if (pData.masteredWords[w.en]) masteredSchoolCount++; });
+      });
+      if (masteredSchoolCount >= allSchoolCount && allSchoolCount > 0) pData.badges.schoolGrand = true;
+
+      let masteredGeptCount = geptWords.filter(w => pData.masteredWords[w.en]).length;
+      if (masteredGeptCount >= geptWords.length && geptWords.length > 0) pData.badges.geptGrand = true;
+    }
+
+    function renderBadgeModal() {
+      const grid = document.getElementById('badge-modal-grid');
+      grid.innerHTML = '';
+      Object.keys(badgeDefinitions).forEach(key => {
+        const def = badgeDefinitions[key];
+        const isUnlocked = pData.badges[key] || false;
+        const card = document.createElement('div');
+        card.className = `badge-card ${isUnlocked ? 'unlocked' : ''}`;
+        card.innerHTML = `
+          <div class="badge-card-icon">${def.icon}</div>
+          <div class="badge-card-info">
+            <div class="badge-card-name">${def.name}</div>
+            <div class="badge-card-desc">${def.desc}</div>
+            <div class="badge-card-status">${isUnlocked ? '✓ 已解鎖' : '🔒 未解鎖'}</div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function setMascot(avatarIcon, text) {
+      document.getElementById('mascot-avatar').textContent = avatarIcon;
+      document.getElementById('mascot-text').textContent = text;
+    }
+
+    function triggerMascotAnimation(icon, text) {
+      setMascot(icon, text);
+      const avatarEl = document.getElementById('mascot-avatar');
+      avatarEl.classList.remove('pop-success');
+      void avatarEl.offsetWidth;
+      avatarEl.classList.add('pop-success');
+    }
+
+    function initMascotSelector() {
+      const btns = document.querySelectorAll('.mascot-opt-btn');
+      btns.forEach(btn => {
+        if (btn.dataset.icon === pData.selectedMascot.icon) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+          btns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          pData.selectedMascot = { icon: btn.dataset.icon, name: btn.dataset.name };
+          savePlayerData();
+          triggerMascotAnimation(pData.selectedMascot.icon, `哈囉！我是${pData.selectedMascot.name}，很高興陪你學習！`);
+        });
+      });
+    }
+
+    document.getElementById('mascot-interactive-box').addEventListener('click', () => {
+      const randomPhrase = mascotPhrases[Math.floor(Math.random() * mascotPhrases.length)];
+      triggerMascotAnimation(pData.selectedMascot.icon, randomPhrase);
+    });
+
+    /* --- 單字庫 Modal 邏輯 --- */
+    let currentDictTab = 'school';
+    const dictModal = document.getElementById('dict-modal');
+    const dictGrid = document.getElementById('dict-word-grid');
+    const dictSearchInput = document.getElementById('dict-search-input');
+    const dictGradeSelect = document.getElementById('dict-grade-select');
+    const dictSubGradeBox = document.getElementById('dict-sub-grade-box');
+
+    document.getElementById('open-dict-modal-btn').addEventListener('click', () => {
+      renderDictModal();
+      dictModal.classList.remove('hidden');
+    });
+    document.getElementById('close-dict-modal-btn').addEventListener('click', () => dictModal.classList.add('hidden'));
+
+    document.querySelectorAll('.dict-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.dict-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentDictTab = btn.dataset.tab;
+        dictSubGradeBox.style.display = (currentDictTab === 'school') ? 'block' : 'none';
+        renderDictModal();
+      });
+    });
+
+    dictSearchInput.addEventListener('input', renderDictModal);
+    dictGradeSelect.addEventListener('change', renderDictModal);
+
+    function renderDictModal() {
+      const query = dictSearchInput.value.trim().toLowerCase();
+      let pool = [];
+
+      if (currentDictTab === 'school') {
+        pool = schoolWords[dictGradeSelect.value] || [];
+      } else if (currentDictTab === 'gept') {
+        pool = geptWords;
+      } else if (currentDictTab === 'mastered') {
+        let allPool = [...geptWords];
+        Object.values(schoolWords).forEach(l => allPool.push(...l));
+        pool = allPool.filter(w => pData.masteredWords[w.en]);
+      }
+
+      if (query) {
+        pool = pool.filter(w => w.en.toLowerCase().includes(query) || w.zh.includes(query));
+      }
+
+      dictGrid.innerHTML = '';
+      if (pool.length === 0) {
+        dictGrid.innerHTML = '<div style="text-align:center; padding: 20px; color:#888;">查無相關單字卡片喔！</div>';
+        return;
+      }
+
+      pool.forEach(w => {
+        const card = document.createElement('div');
+        card.className = 'dict-card';
+        card.innerHTML = `
+          <div>
+            <span class="dict-card-en">${w.en}</span>
+            <span style="font-size:0.8rem; margin-left:6px; color:#27AE60;">${pData.masteredWords[w.en] ? '✓已學會' : ''}</span>
+            <div class="dict-card-zh">${w.zh}</div>
+          </div>
+          <div class="dict-card-action">
+            <button class="dict-audio-btn" title="聽發音">🔊</button>
+          </div>
+        `;
+        card.querySelector('.dict-audio-btn').addEventListener('click', () => speakWord(w.en));
+        dictGrid.appendChild(card);
+      });
+    }
+
+    let currentQuizList = [];
+    let currentIndex = 0;
+    let score = 0;
+    let currentMode = '';
+    let isAnswered = false;
+    let wrongWords = [];
+
+    const setupScreen = document.getElementById('setup-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const gradeSelect = document.getElementById('grade-select');
+    const modeSelect = document.getElementById('mode-select');
+    const countSelect = document.getElementById('count-select');
+    const promptDisplay = document.getElementById('prompt-display');
+    const speakBtn = document.getElementById('speak-btn');
+    const choiceContainer = document.getElementById('choice-container');
+    const spellingContainer = document.getElementById('spelling-container');
+    const spellingInput = document.getElementById('spelling-input');
+    const submitSpellingBtn = document.getElementById('submit-spelling-btn');
+    const hintBtn = document.getElementById('hint-btn');
+    const feedback = document.getElementById('feedback');
+    const currentIndexDisplay = document.getElementById('current-index');
+    const totalCountDisplay = document.getElementById('total-count');
+    const scoreDisplay = document.getElementById('score');
+    const finalScoreDisplay = document.getElementById('final-score');
+    const wrongListBox = document.getElementById('wrong-list-box');
+    const wrongListItems = document.getElementById('wrong-list-items');
+    const wrongCountDisplay = document.getElementById('wrong-count');
+    const reviewBtn = document.getElementById('review-btn');
+
+    const badgeModal = document.getElementById('badge-modal');
+    document.getElementById('open-badge-modal-btn').addEventListener('click', () => {
+      renderBadgeModal();
+      badgeModal.classList.remove('hidden');
+    });
+    document.getElementById('close-badge-modal-btn').addEventListener('click', () => badgeModal.classList.add('hidden'));
+
+    document.getElementById('start-btn').addEventListener('click', () => startGame(false));
+    document.getElementById('restart-btn').addEventListener('click', resetToSetup);
+    document.getElementById('quit-game-btn').addEventListener('click', quitGameMidway);
+    reviewBtn.addEventListener('click', () => startGame(true));
+    submitSpellingBtn.addEventListener('click', handleSpellingSubmit);
+    speakBtn.addEventListener('click', speakCurrentWord);
+    hintBtn.addEventListener('click', giveSpellingHint);
+    spellingInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleSpellingSubmit();
+    });
+
+    function speakWord(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = 0.85;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    function speakCurrentWord() {
+      const q = currentQuizList[currentIndex];
+      if (q) speakWord(q.en);
+    }
+
+    function quitGameMidway() {
+      const confirmQuit = confirm("確定要放棄本次冒險嗎？\n（放棄後本次獲得的分數、經驗值與紀錄將不會儲存喔！）");
+      if (confirmQuit) {
+        comboCount = 0;
+        resetToSetup();
+      }
+    }
+
+    function startGame(isReview = false) {
+      currentMode = modeSelect.value;
+      comboCount = 0; // 重置連對次數
+      updateComboUI();
+      
+      if (isReview) {
+        currentQuizList = shuffle([...wrongWords]);
+      } else {
+        const selectedKey = gradeSelect.value;
+        const questionCount = parseInt(countSelect.value, 10);
+        let pool = [];
+
+        if (selectedKey === 'all') Object.values(schoolWords).forEach(l => pool.push(...l));
+        else if (selectedKey === 'gept_all') pool = geptWords;
+        else if (selectedKey === 'gept_easy') pool = geptWords.filter(w => w.en.length <= 5);
+        else if (selectedKey === 'gept_hard') pool = geptWords.filter(w => w.en.length > 5);
+        else pool = schoolWords[selectedKey] || [];
+
+        if (pool.length === 0) return alert('該題庫尚無可用單字！');
+
+        let unseenItems = pool.filter(w => !pData.seenWords[w.en]);
+        let wrongMemoryKeys = Object.keys(pData.wrongMemory);
+        let memoryItems = pool.filter(w => wrongMemoryKeys.includes(w.en));
+        let masteredItems = pool.filter(w => pData.seenWords[w.en] && !wrongMemoryKeys.includes(w.en));
+
+        // 如果全部單字都學完看過了，無縫重置循環選單進度
+        if (unseenItems.length === 0) {
+          pool.forEach(w => delete pData.seenWords[w.en]);
+          unseenItems = [...pool]; memoryItems = []; masteredItems = [];
+        }
+
+        let prioritizedPool = [...shuffle(unseenItems), ...shuffle(memoryItems), ...shuffle(masteredItems)];
+        currentQuizList = prioritizedPool.slice(0, Math.min(questionCount, prioritizedPool.length));
+
+        currentQuizList.forEach(w => pData.seenWords[w.en] = true);
+        savePlayerData();
+      }
+
+      currentIndex = 0; score = 0; wrongWords = [];
+      setupScreen.classList.add('hidden'); resultScreen.classList.add('hidden'); gameScreen.classList.remove('hidden');
+
+      totalCountDisplay.textContent = currentQuizList.length; scoreDisplay.textContent = score;
+      triggerMascotAnimation(pData.selectedMascot.icon, '保持專注！點擊 🔊 可以聽發音喔！');
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      isAnswered = false; feedback.textContent = ''; feedback.className = 'feedback'; spellingInput.value = '';
+
+      const q = currentQuizList[currentIndex];
+      currentIndexDisplay.textContent = currentIndex + 1;
+
+      if (currentMode === 'choice-en-zh') {
+        promptDisplay.textContent = q.en; setupChoices(q, 'zh');
+      } else if (currentMode === 'choice-zh-en') {
+        promptDisplay.textContent = q.zh; setupChoices(q, 'en');
+      } else if (currentMode === 'listening') {
+        promptDisplay.textContent = "🔊 聽發音猜單字"; setupChoices(q, 'listening_bilingual');
+        speakWord(q.en);
+      } else if (currentMode === 'spelling') {
+        promptDisplay.textContent = q.zh;
+        choiceContainer.classList.add('hidden'); spellingContainer.classList.remove('hidden');
+        spellingInput.focus();
+      }
+    }
+
+    function setupChoices(correctItem, targetKey) {
+      spellingContainer.classList.add('hidden'); choiceContainer.classList.remove('hidden'); choiceContainer.innerHTML = '';
+      let allWords = [...geptWords]; Object.values(schoolWords).forEach(l => allWords.push(...l));
+      let wrongPool = shuffle(allWords.filter(w => w.en !== correctItem.en)).slice(0, 3);
+      let options = shuffle([correctItem, ...wrongPool]);
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        if (targetKey === 'listening_bilingual') {
+          btn.textContent = `${opt.en} (${opt.zh})`;
+        } else {
+          btn.textContent = opt[targetKey];
+        }
+        btn.addEventListener('click', () => handleChoiceSelect(opt, correctItem));
+        choiceContainer.appendChild(btn);
+      });
+    }
+
+    function giveSpellingHint() {
+      if (isAnswered) return;
+      const q = currentQuizList[currentIndex];
+      spellingInput.value = q.en.charAt(0) + ' _ '.repeat(q.en.length - 1).trim();
+      triggerMascotAnimation('💡', `提示第一個字母是 '${q.en.charAt(0).toUpperCase()}'！`);
+    }
+
+    function handleChoiceSelect(selectedItem, correctItem) {
+      if (isAnswered) return;
+      isAnswered = true;
+
+      if (selectedItem.en === correctItem.en) handleCorrectAnswer(correctItem);
+      else handleWrongAnswer(correctItem, currentMode === 'choice-en-zh' ? correctItem.zh : `${correctItem.en} (${correctItem.zh})`);
+    }
+
+    function handleSpellingSubmit() {
+      if (isAnswered) return;
+      const userInput = spellingInput.value.trim().toLowerCase();
+      if (!userInput) return;
+
+      isAnswered = true;
+      const q = currentQuizList[currentIndex];
+
+      if (userInput === q.en.toLowerCase()) handleCorrectAnswer(q);
+      else handleWrongAnswer(q, q.en);
+    }
+
+    function updateComboUI() {
+      const box = document.getElementById('combo-display-box');
+      const countEl = document.getElementById('combo-count');
+      if (comboCount >= 2) {
+        countEl.textContent = comboCount;
+        box.classList.remove('hidden');
+      } else {
+        box.classList.add('hidden');
+      }
+    }
+
+    function handleCorrectAnswer(item) {
+      score += 10; comboCount++; updateComboUI();
+
+      // 計算經驗值獎勵：模式基礎 (拼字加倍20XP/選擇10XP) + Combo連擊加算
+      let baseXP = (currentMode === 'spelling') ? 20 : 10;
+      let bonusXP = 0;
+      if (comboCount >= 5) bonusXP = 10; // Combo 5 額外 +10 XP (相當於XP加倍)
+      else if (comboCount >= 3) bonusXP = 5;
+
+      addXP(baseXP + bonusXP);
+      pData.correctTotal++;
+      pData.masteredWords[item.en] = true;
+
+      let praiseText = mascotPraisePhrases[Math.floor(Math.random() * mascotPraisePhrases.length)];
+      if (comboCount >= 5) praiseText = `⚡ 熱血 Combo x${comboCount}! XP加倍！`;
+      else if (comboCount >= 3) praiseText = `🔥 連對 Combo x${comboCount}! XP加成！`;
+
+      feedback.textContent = `🎉 太棒了！答對囉！(+${baseXP + bonusXP} XP)`; 
+      feedback.className = 'feedback correct';
+
+      triggerMascotAnimation(pData.selectedMascot.icon, `🎉 ${praiseText}`);
+
+      if (pData.wrongMemory[item.en]) {
+        pData.wrongMemory[item.en]++;
+        if (pData.wrongMemory[item.en] >= 3) delete pData.wrongMemory[item.en];
+      }
+      savePlayerData(); scoreDisplay.textContent = score; nextQuestionWithDelay();
+    }
+
+    function handleWrongAnswer(item, correctText) {
+      comboCount = 0; updateComboUI(); // 答錯重置 Combo
+      wrongWords.push(item);
+      pData.wrongMemory[item.en] = 0; savePlayerData();
+      feedback.textContent = `❌ 正確答案是：${correctText}`; feedback.className = 'feedback incorrect';
+      setMascot(pData.selectedMascot.icon, '沒關係，記下來下次一定會答對！');
+      scoreDisplay.textContent = score; nextQuestionWithDelay();
+    }
+
+    function nextQuestionWithDelay() {
+      setTimeout(() => {
+        currentIndex++;
+        if (currentIndex < currentQuizList.length) loadQuestion();
+        else endGame();
+      }, 1600);
+    }
+
+    function endGame() {
+      gameScreen.classList.add('hidden'); resultScreen.classList.remove('hidden');
+      finalScoreDisplay.textContent = score; pData.badges.first = true;
+
+      if (currentMode === 'spelling' && score >= 80) pData.badges.spelling = true;
+
+      if (wrongWords.length === 0) {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        triggerMascotAnimation(pData.selectedMascot.icon, '大滿分！你真是英語小天才！');
+      } else {
+        setMascot(pData.selectedMascot.icon, '挑戰完成！來複習一下剛剛答錯的字吧！');
+      }
+
+      savePlayerData();
+
+      if (wrongWords.length > 0) {
+        wrongCountDisplay.textContent = wrongWords.length; wrongListItems.innerHTML = '';
+        wrongWords.forEach(w => {
+          const item = document.createElement('div');
+          item.className = 'wrong-item';
+          item.innerHTML = `<span><strong>${w.en}</strong></span><span>${w.zh}</span>`;
+          wrongListItems.appendChild(item);
+        });
+        wrongListBox.classList.remove('hidden'); reviewBtn.classList.remove('hidden');
+      } else {
+        wrongListBox.classList.add('hidden'); reviewBtn.classList.add('hidden');
+      }
+    }
+
+    function resetToSetup() {
+      gameScreen.classList.add('hidden');
+      resultScreen.classList.add('hidden');
+      setupScreen.classList.remove('hidden');
+      setMascot(pData.selectedMascot.icon, '準備好了嗎？點擊 🔊 可以聽發音喔！');
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    checkDailyStreak(); initMascotSelector(); updateProfileUI();
+    setMascot(pData.selectedMascot.icon, `哈囉！我是${pData.selectedMascot.name}，很高興陪你學習！`);
+  </script>
+</body>
+</html>
