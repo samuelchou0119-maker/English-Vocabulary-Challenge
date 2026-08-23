@@ -310,8 +310,8 @@
       <div class="form-group">
         <label for="grade-select">🎯 選擇挑戰題庫：</label>
         <select id="grade-select">
-          <optgroup label="🌟 校園課程單字">
-            <option value="all">全校園混合挑戰</option>
+          <optgroup label="🌟 學校課程單字">
+            <option value="all">全年級混合挑戰</option>
             <option value="grade1">一年級</option>
             <option value="grade2">二年級</option>
             <option value="grade3">三年級</option>
@@ -330,10 +330,10 @@
       <div class="form-group">
         <label for="mode-select">🎮 選擇玩法模式：</label>
         <select id="mode-select">
-          <option value="choice-en-zh">📖 看英文選中文 (+10 XP)</option>
-          <option value="choice-zh-en">🔤 看中文選英文 (+10 XP)</option>
-          <option value="listening">🎧 聽力大考驗 (聽發音選英文 +10 XP)</option>
-          <option value="spelling">✍️ 小英雄拼字大考驗 (雙倍 +20 XP!)</option>
+          <option value="choice-en-zh">📖 看英文選中文</option>
+          <option value="choice-zh-en">🔤 看中文選英文</option>
+          <option value="listening">🎧 聽力大考驗 (聽發音選英文)</option>
+          <option value="spelling">✍️ 小英雄拼字大考驗</option>
         </select>
       </div>
 
@@ -342,7 +342,7 @@
         <select id="count-select">
           <option value="10">10 題 (快速挑戰)</option>
           <option value="20">20 題 (標準挑戰)</option>
-          <option value="50">50 題 (大師挑戰)</option>
+          <option value="50" id="opt-50-count">50 題 (大師挑戰)</option>
         </select>
       </div>
 
@@ -458,7 +458,6 @@
       return audioCtx;
     }
 
-    // 播放 8-bit 通關勝利歡慶配樂 (Victory Fanfare)
     function playVictoryFanfare() {
       try {
         const ctx = getAudioContext();
@@ -488,7 +487,6 @@
       }
     }
 
-    // 播放答錯音效 (低音雙嗶聲 Buzzer)
     function playWrongSound() {
       try {
         const ctx = getAudioContext();
@@ -655,7 +653,7 @@
       if (pData.streak >= 3) pData.badges.streak3 = true;
       if (pData.streak >= 7) pData.badges.streak7 = true;
       if (pData.streak >= 10) pData.badges.streak10 = true;
-      if (pData.streak >= 30) pData.badges.streak30 = true;
+      if (pData.streak >= 30) pData.badges.streak3 = true;
       if (pData.streak >= 50) pData.badges.streak50 = true;
       if (pData.streak >= 100) pData.badges.streak100 = true;
       if (pData.streak >= 200) pData.badges.streak200 = true;
@@ -663,7 +661,6 @@
       if (pData.correctTotal >= 50) pData.badges.master50 = true;
       if (pData.correctTotal >= 200) pData.badges.master200 = true;
 
-      // 檢查各年級專屬徽章解鎖狀態
       for (let g = 1; g <= 6; g++) {
         const key = `grade${g}`;
         const list = schoolWords[key] || [];
@@ -733,9 +730,23 @@
       });
     }
 
+    function updateCountOptionsVisibility() {
+      const gradeVal = document.getElementById('grade-select').value;
+      const opt50 = document.getElementById('opt-50-count');
+      const countSelect = document.getElementById('count-select');
+
+      if (gradeVal === 'grade1') {
+        opt50.style.display = 'none';
+        if (countSelect.value === '50') countSelect.value = '20';
+      } else {
+        opt50.style.display = 'block';
+      }
+    }
+
     const playerSelect = document.getElementById('player-select');
     const playerNameInput = document.getElementById('player-name-input');
     const mascotBox = document.getElementById('mascot-interactive-box');
+    const gradeSelect = document.getElementById('grade-select');
 
     playerSelect.value = currentPlayerKey;
     playerNameInput.value = pData.playerName || '玩家1';
@@ -754,6 +765,8 @@
       pData.playerName = e.target.value.trim() || '玩家';
       savePlayerData();
     });
+
+    gradeSelect.addEventListener('change', updateCountOptionsVisibility);
 
     document.querySelectorAll('.mascot-opt-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -849,7 +862,6 @@
     const setupScreen = document.getElementById('setup-screen');
     const gameScreen = document.getElementById('game-screen');
     const resultScreen = document.getElementById('result-screen');
-    const gradeSelect = document.getElementById('grade-select');
     const modeSelect = document.getElementById('mode-select');
     const countSelect = document.getElementById('count-select');
     const promptDisplay = document.getElementById('prompt-display');
@@ -1064,7 +1076,6 @@
         document.getElementById('completion-modal-text').innerHTML = 
           `太震撼了！【${pData.playerName}】你已經 100% 完全掌握了<b>『${titleName}』</b>的所有單字！獲得最高金牌榮譽！`;
         
-        // 播放歡慶號角音效 + 彩花
         playVictoryFanfare();
         confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
         completionModal.classList.remove('hidden');
@@ -1167,7 +1178,7 @@
       return array;
     }
 
-    checkDailyStreak(); initMascotSelector(); updateProfileUI();
+    checkDailyStreak(); initMascotSelector(); updateProfileUI(); updateCountOptionsVisibility();
     setMascot(pData.selectedMascot.icon, `哈囉！我是${pData.selectedMascot.name}，很高興陪你學習！`);
   </script>
 </body>
