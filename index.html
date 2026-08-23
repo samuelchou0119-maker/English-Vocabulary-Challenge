@@ -271,7 +271,7 @@
       </div>
     </div>
 
-    <!-- 吉祥物互動對話框（主選單專用，作答時會自動隱藏） -->
+    <!-- 吉祥物互動對話框（主選單專用） -->
     <div class="mascot-box" id="mascot-interactive-box">
       <div class="mascot-avatar" id="mascot-avatar">🐱</div>
       <div class="mascot-bubble" id="mascot-text">準備好了嗎？點擊 🔊 可以聽發音喔！</div>
@@ -447,6 +447,76 @@
   </div>
 
   <script>
+    // Web Audio API 音效合成器
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    // 播放 8-bit 通關勝利歡慶配樂 (Victory Fanfare)
+    function playVictoryFanfare() {
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        
+        const notes = [
+          { f: 523.25, start: 0, dur: 0.15 },
+          { f: 659.25, start: 0.15, dur: 0.15 },
+          { f: 783.99, start: 0.30, dur: 0.15 },
+          { f: 1046.50, start: 0.45, dur: 0.50 }
+        ];
+
+        notes.forEach(n => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(n.f, now + n.start);
+          gain.gain.setValueAtTime(0.25, now + n.start);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + n.start + n.dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + n.start);
+          osc.stop(now + n.start + n.dur);
+        });
+      } catch (e) {
+        console.log("Audio play suppressed");
+      }
+    }
+
+    // 播放答錯音效 (低音雙嗶聲 Buzzer)
+    function playWrongSound() {
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const tones = [
+          { f: 180, start: 0, dur: 0.15 },
+          { f: 140, start: 0.18, dur: 0.25 }
+        ];
+
+        tones.forEach(t => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(t.f, now + t.start);
+          gain.gain.setValueAtTime(0.2, now + t.start);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + t.start + t.dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + t.start);
+          osc.stop(now + t.start + t.dur);
+        });
+      } catch (e) {
+        console.log("Audio play suppressed");
+      }
+    }
+
     const schoolWords = {
       "grade1": [{"en":"apple","zh":"蘋果"},{"en":"ant","zh":"螞蟻"},{"en":"boy","zh":"男孩"},{"en":"ball","zh":"球"},{"en":"cat","zh":"貓"},{"en":"candy","zh":"糖果"},{"en":"dog","zh":"狗"},{"en":"door","zh":"門口"},{"en":"egg","zh":"蛋"},{"en":"fox","zh":"狐狸"},{"en":"fish","zh":"魚"},{"en":"girl","zh":"女孩"},{"en":"hat","zh":"帽子"},{"en":"ink","zh":"墨水"},{"en":"jam","zh":"果醬"},{"en":"jump","zh":"跳躍"},{"en":"kid","zh":"孩子"},{"en":"kite","zh":"風箏"},{"en":"lion","zh":"獅子"},{"en":"lake","zh":"湖泊"},{"en":"map","zh":"地圖"},{"en":"net","zh":"網子"},{"en":"nose","zh":"鼻子"},{"en":"ox","zh":"公牛"},{"en":"pig","zh":"豬"},{"en":"queen","zh":"皇后"},{"en":"robot","zh":"機器人"},{"en":"rope","zh":"繩子"},{"en":"run","zh":"跑"},{"en":"sun","zh":"太陽"},{"en":"tiger","zh":"老虎"},{"en":"toy","zh":"玩具"},{"en":"up","zh":"向上"},{"en":"vest","zh":"背心"},{"en":"van","zh":"廂型車"},{"en":"water","zh":"水"},{"en":"box","zh":"箱子"},{"en":"six","zh":"六"},{"en":"yo-yo","zh":"溜溜球"},{"en":"zoo","zh":"動物園"}],
       "grade2": [{"en":"food","zh":"食物"},{"en":"juice","zh":"果汁"},{"en":"cookie","zh":"餅乾"},{"en":"milk","zh":"牛奶"},{"en":"hot dog","zh":"熱狗"},{"en":"cake","zh":"蛋糕"},{"en":"rice","zh":"飯"},{"en":"one","zh":"一"},{"en":"two","zh":"二"},{"en":"pizza","zh":"比薩"},{"en":"four","zh":"四"},{"en":"five","zh":"五"},{"en":"six","zh":"六"},{"en":"ten","zh":"十"},{"en":"baby","zh":"嬰兒"},{"en":"father","zh":"爸爸"},{"en":"mother","zh":"媽媽"},{"en":"city","zh":"城市"},{"en":"bank","zh":"銀行"},{"en":"hotel","zh":"旅館"},{"en":"park","zh":"公園"},{"en":"sea","zh":"大海"},{"en":"lake","zh":"湖泊"},{"en":"road","zh":"道路"},{"en":"tree","zh":"樹木"},{"en":"color","zh":"顏色"},{"en":"red","zh":"紅色"},{"en":"pink","zh":"粉紅色"},{"en":"green","zh":"綠色"},{"en":"blue","zh":"藍色"},{"en":"cup","zh":"杯子"},{"en":"dish","zh":"盤子"},{"en":"fork","zh":"叉子"},{"en":"desk","zh":"書桌"},{"en":"card","zh":"卡片"},{"en":"bag","zh":"袋子"},{"en":"gift","zh":"禮物"},{"en":"kite","zh":"風箏"},{"en":"book","zh":"書本"},{"en":"body","zh":"身體"},{"en":"nose","zh":"鼻子"},{"en":"ear","zh":"耳朵"},{"en":"eye","zh":"眼睛"},{"en":"face","zh":"臉龐"},{"en":"leg","zh":"腿部"},{"en":"hand","zh":"手部"},{"en":"head","zh":"頭部"},{"en":"arm","zh":"手臂"},{"en":"shoe","zh":"鞋子"},{"en":"coat","zh":"大衣"},{"en":"how","zh":"如何"},{"en":"what","zh":"什麼"},{"en":"why","zh":"為什麼"},{"en":"fan","zh":"電風扇"},{"en":"name","zh":"名字"},{"en":"song","zh":"歌曲"},{"en":"hot","zh":"熱的"},{"en":"cold","zh":"冷的"},{"en":"taxi","zh":"計程車"},{"en":"sad","zh":"悲傷的"},{"en":"happy","zh":"快樂的"},{"en":"sorry","zh":"抱歉的"},{"en":"lazy","zh":"懶惰的"},{"en":"shy","zh":"害羞的"},{"en":"sick","zh":"生病的"},{"en":"lucky","zh":"幸運的"},{"en":"cute","zh":"可愛的"},{"en":"safe","zh":"安全的"},{"en":"new","zh":"新的"},{"en":"old","zh":"舊的/老的"},{"en":"dry","zh":"乾燥的"},{"en":"short","zh":"矮的/短的"},{"en":"fast","zh":"快速的"},{"en":"late","zh":"遲到的"},{"en":"all","zh":"全部"},{"en":"cook","zh":"烹飪/廚師"},{"en":"feel","zh":"感覺"},{"en":"cry","zh":"哭泣"},{"en":"see","zh":"看見"},{"en":"wash","zh":"清洗"},{"en":"play","zh":"遊玩/播放"},{"en":"sing","zh":"唱歌"},{"en":"swim","zh":"游泳"},{"en":"jog","zh":"慢跑"},{"en":"run","zh":"奔跑"},{"en":"kick","zh":"踢"},{"en":"open","zh":"開啟"},{"en":"like","zh":"喜歡"},{"en":"come","zh":"前來"},{"en":"go","zh":"前往"},{"en":"eat","zh":"進食"},{"en":"drink","zh":"飲用"},{"en":"ant","zh":"螞蟻"},{"en":"bear","zh":"熊"},{"en":"cat","zh":"貓"},{"en":"elf","zh":"小精靈"},{"en":"fish","zh":"魚"},{"en":"goat","zh":"山羊"},{"en":"tiger","zh":"老虎"},{"en":"lion","zh":"獅子"}],
@@ -866,7 +936,6 @@
 
       currentIndex = 0; score = 0; wrongWords = [];
       
-      // 隱藏選單與吉祥物對話框，開啟遊戲介面
       setupScreen.classList.add('hidden'); 
       mascotBox.classList.add('hidden'); 
       resultScreen.classList.add('hidden'); 
@@ -1016,6 +1085,10 @@
       comboCount = 0; updateComboUI();
       wrongWords.push(item);
       pData.wrongMemory[item.en] = 0; savePlayerData();
+      
+      // 答錯時播放雙嗶聲低音音效
+      playWrongSound();
+
       feedback.textContent = `❌ 正確答案是：${correctText}`; feedback.className = 'feedback incorrect';
       scoreDisplay.textContent = score; nextQuestionWithDelay();
     }
@@ -1031,6 +1104,9 @@
     function endGame() {
       currentIndex = currentQuizList.length;
       updateMascotRunnerPosition();
+
+      // 播放通關歡慶號角配樂
+      playVictoryFanfare();
 
       gameScreen.classList.add('hidden'); 
       resultScreen.classList.remove('hidden');
@@ -1062,7 +1138,7 @@
       gameScreen.classList.add('hidden');
       resultScreen.classList.add('hidden');
       setupScreen.classList.remove('hidden');
-      mascotBox.classList.remove('hidden'); // 重新顯示選單吉祥物對話框
+      mascotBox.classList.remove('hidden');
       setMascot(pData.selectedMascot.icon, '準備好了嗎？點擊 🔊 可以聽發音喔！');
     }
 
