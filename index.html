@@ -58,8 +58,16 @@
       gap: 4px;
     }
 
+    .player-name-tag {
+      color: #D35400;
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .xp-bar-container {
-      width: 55px;
+      width: 45px;
       height: 10px;
       background: #E0E0E0;
       border-radius: 6px;
@@ -116,7 +124,7 @@
     .form-group { margin-bottom: 14px; }
     label { display: block; margin-bottom: 6px; font-weight: bold; color: #388E3C; }
 
-    select {
+    select, input[type="text"].input-field {
       width: 100%; padding: 10px; border-radius: 14px; border: 3px solid #A5D6A7;
       font-size: 1rem; outline: none; background-color: #F1F8E9; font-weight: bold; color: var(--text);
     }
@@ -130,7 +138,7 @@
     .btn:active { transform: translateY(4px); box-shadow: 0 2px 0px #D63031; }
 
     .btn-quit { background: #FF9F43; box-shadow: 0 4px 0px #EE5253; padding: 10px; font-size: 0.95rem; margin-top: 16px; }
-    .btn-quit:hover { background: #EE5253; }
+    .btn-reset { background: #A0AEC0; box-shadow: 0 4px 0px #718096; padding: 8px; font-size: 0.85rem; margin-top: 14px; }
 
     .btn-review { background: #FFA502; box-shadow: 0 6px 0px #CC8E00; margin-bottom: 8px; }
     .btn-hint { background: #20BF6B; box-shadow: 0 4px 0px #26DE81; padding: 8px; font-size: 0.95rem; margin-top: 6px; }
@@ -143,9 +151,7 @@
       border-radius: 12px; border: 2px dashed var(--secondary);
     }
 
-    .combo-badge {
-      color: #E67E22; font-weight: 900; animation: pulse 0.8s infinite alternate;
-    }
+    .combo-badge { color: #E67E22; font-weight: 900; animation: pulse 0.8s infinite alternate; }
     @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
 
     .question-box {
@@ -161,7 +167,6 @@
       width: 44px; height: 44px; font-size: 1.4rem; cursor: pointer;
       display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 0px #F39C12;
     }
-    .speaker-btn:active { transform: translateY(2px); box-shadow: 0 2px 0px #F39C12; }
 
     .options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
     .option-btn {
@@ -221,7 +226,6 @@
     }
     .dict-card-en { font-weight: bold; font-size: 1.1rem; color: var(--primary); }
     .dict-card-zh { color: #4A5568; font-size: 0.95rem; }
-    .dict-card-action { display: flex; align-items: center; gap: 8px; }
     .dict-audio-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; }
 
     .badge-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
@@ -239,6 +243,7 @@
 
   <div class="container">
     <div class="player-profile">
+      <span class="player-name-tag">👤 <span id="profile-name">玩家1</span></span>
       <span>🔥 <span id="streak-days">1</span>天</span>
       <span>⭐ LV.<span id="player-level">1</span>
         <div class="xp-bar-container"><div class="xp-bar" id="xp-bar"></div></div>
@@ -257,6 +262,22 @@
     <h1>🎈 英語單字大冒險 🎈</h1>
 
     <div id="setup-screen">
+      <!-- 多玩家存檔切換欄與自訂命名框 -->
+      <div style="background: #EBF8FF; padding: 12px; border-radius: 16px; border: 2px solid #90CDF4; margin-bottom: 14px;">
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label for="player-select" style="color: #2B6CB0;">📁 選擇玩家存檔槽：</label>
+          <select id="player-select">
+            <option value="player1">存檔 1</option>
+            <option value="player2">存檔 2</option>
+            <option value="player3">存檔 3</option>
+          </select>
+        </div>
+        <div>
+          <label for="player-name-input" style="color: #2B6CB0;">✏️ 玩家名字 / 暱稱：</label>
+          <input type="text" id="player-name-input" class="input-field" placeholder="請輸入名字..." maxlength="8">
+        </div>
+      </div>
+
       <div class="form-group">
         <label>🐾 選擇你的吉祥物夥伴：</label>
         <div class="mascot-selector-wrapper" id="mascot-selector">
@@ -310,6 +331,7 @@
       </div>
 
       <button class="btn" id="start-btn">🚀 開始冒險！</button>
+      <button class="btn btn-reset" id="reset-player-btn">🗑️ 重置【<span id="reset-target-name">當前玩家</span>】紀錄</button>
     </div>
 
     <div id="game-screen" class="hidden">
@@ -433,24 +455,48 @@
       "Awesome!", "Super!", "Great job!", "Fantastic!", "Amazing!", "Keep it up!"
     ];
 
-    let pData = JSON.parse(localStorage.getItem('kids_eng_game_v7')) || {
-      xp: 0, level: 1, streak: 1, lastLogin: '', correctTotal: 0,
-      badges: {
-        first: false, streak3: false, streak7: false, streak10: false, streak30: false,
-        streak50: false, streak100: false, streak200: false, streak365: false,
-        spelling: false, master50: false, master200: false, schoolGrand: false, geptGrand: false
-      },
-      wrongMemory: {},
-      seenWords: {},
-      masteredWords: {},
-      selectedMascot: { icon: "🐱", name: "小貓咪" }
-    };
+    let currentPlayerKey = localStorage.getItem('kids_eng_current_player') || 'player1';
+    let pData = loadPlayerData(currentPlayerKey);
+    let comboCount = 0;
 
-    let comboCount = 0; // 當前連續答對 Combo 題數
+    function createDefaultPlayerData(defaultName) {
+      return {
+        playerName: defaultName || '玩家',
+        xp: 0, level: 1, streak: 1, lastLogin: '', correctTotal: 0,
+        badges: {
+          first: false, streak3: false, streak7: false, streak10: false, streak30: false,
+          streak50: false, streak100: false, streak200: false, streak365: false,
+          spelling: false, master50: false, master200: false, schoolGrand: false, geptGrand: false
+        },
+        wrongMemory: {},
+        seenWords: {},
+        masteredWords: {},
+        selectedMascot: { icon: "🐱", name: "小貓咪" }
+      };
+    }
+
+    function loadPlayerData(playerKey) {
+      const data = localStorage.getItem(`kids_eng_game_v9_${playerKey}`);
+      const defaultName = playerKey === 'player1' ? '玩家1' : (playerKey === 'player2' ? '玩家2' : '玩家3');
+      return data ? JSON.parse(data) : createDefaultPlayerData(defaultName);
+    }
 
     function savePlayerData() {
-      localStorage.setItem('kids_eng_game_v7', JSON.stringify(pData));
+      localStorage.setItem(`kids_eng_game_v9_${currentPlayerKey}`, JSON.stringify(pData));
+      localStorage.setItem('kids_eng_current_player', currentPlayerKey);
       updateProfileUI();
+    }
+
+    function resetCurrentPlayerData() {
+      const confirmReset = confirm(`⚠️ 警告！\n你確定要清除【${pData.playerName}】的所有學習紀錄嗎？\n\n（重置後等級、經驗值、徽章與已學會單字庫將會全部歸零且無法復原！）`);
+      if (confirmReset) {
+        const defaultName = currentPlayerKey === 'player1' ? '玩家1' : (currentPlayerKey === 'player2' ? '玩家2' : '玩家3');
+        pData = createDefaultPlayerData(defaultName);
+        document.getElementById('player-name-input').value = pData.playerName;
+        savePlayerData();
+        initMascotSelector();
+        setMascot(pData.selectedMascot.icon, `【${pData.playerName}】紀錄已歸零！重新開始冒險吧！`);
+      }
     }
 
     function checkDailyStreak() {
@@ -478,6 +524,8 @@
     }
 
     function updateProfileUI() {
+      document.getElementById('profile-name').textContent = pData.playerName;
+      document.getElementById('reset-target-name').textContent = pData.playerName;
       document.getElementById('streak-days').textContent = pData.streak;
       document.getElementById('player-level').textContent = pData.level;
       const nextXP = pData.level * 50;
@@ -545,16 +593,42 @@
     function initMascotSelector() {
       const btns = document.querySelectorAll('.mascot-opt-btn');
       btns.forEach(btn => {
+        btn.classList.remove('active');
         if (btn.dataset.icon === pData.selectedMascot.icon) btn.classList.add('active');
-        btn.addEventListener('click', () => {
-          btns.forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          pData.selectedMascot = { icon: btn.dataset.icon, name: btn.dataset.name };
-          savePlayerData();
-          triggerMascotAnimation(pData.selectedMascot.icon, `哈囉！我是${pData.selectedMascot.name}，很高興陪你學習！`);
-        });
       });
     }
+
+    // 初始化玩家切換選擇器與自訂名字輸入框
+    const playerSelect = document.getElementById('player-select');
+    const playerNameInput = document.getElementById('player-name-input');
+
+    playerSelect.value = currentPlayerKey;
+    playerNameInput.value = pData.playerName || '玩家1';
+
+    playerSelect.addEventListener('change', (e) => {
+      currentPlayerKey = e.target.value;
+      pData = loadPlayerData(currentPlayerKey);
+      playerNameInput.value = pData.playerName;
+      checkDailyStreak();
+      updateProfileUI();
+      initMascotSelector();
+      setMascot(pData.selectedMascot.icon, `切換成功！歡迎回來【${pData.playerName}】！`);
+    });
+
+    playerNameInput.addEventListener('input', (e) => {
+      pData.playerName = e.target.value.trim() || '玩家';
+      savePlayerData();
+    });
+
+    document.querySelectorAll('.mascot-opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mascot-opt-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        pData.selectedMascot = { icon: btn.dataset.icon, name: btn.dataset.name };
+        savePlayerData();
+        triggerMascotAnimation(pData.selectedMascot.icon, `哈囉！我是${pData.selectedMascot.name}，很高興陪你學習！`);
+      });
+    });
 
     document.getElementById('mascot-interactive-box').addEventListener('click', () => {
       const randomPhrase = mascotPhrases[Math.floor(Math.random() * mascotPhrases.length)];
@@ -670,6 +744,7 @@
     document.getElementById('start-btn').addEventListener('click', () => startGame(false));
     document.getElementById('restart-btn').addEventListener('click', resetToSetup);
     document.getElementById('quit-game-btn').addEventListener('click', quitGameMidway);
+    document.getElementById('reset-player-btn').addEventListener('click', resetCurrentPlayerData);
     reviewBtn.addEventListener('click', () => startGame(true));
     submitSpellingBtn.addEventListener('click', handleSpellingSubmit);
     speakBtn.addEventListener('click', speakCurrentWord);
@@ -703,7 +778,7 @@
 
     function startGame(isReview = false) {
       currentMode = modeSelect.value;
-      comboCount = 0; // 重置連對次數
+      comboCount = 0;
       updateComboUI();
       
       if (isReview) {
@@ -726,7 +801,6 @@
         let memoryItems = pool.filter(w => wrongMemoryKeys.includes(w.en));
         let masteredItems = pool.filter(w => pData.seenWords[w.en] && !wrongMemoryKeys.includes(w.en));
 
-        // 如果全部單字都學完看過了，無縫重置循環選單進度
         if (unseenItems.length === 0) {
           pool.forEach(w => delete pData.seenWords[w.en]);
           unseenItems = [...pool]; memoryItems = []; masteredItems = [];
@@ -827,10 +901,9 @@
     function handleCorrectAnswer(item) {
       score += 10; comboCount++; updateComboUI();
 
-      // 計算經驗值獎勵：模式基礎 (拼字加倍20XP/選擇10XP) + Combo連擊加算
       let baseXP = (currentMode === 'spelling') ? 20 : 10;
       let bonusXP = 0;
-      if (comboCount >= 5) bonusXP = 10; // Combo 5 額外 +10 XP (相當於XP加倍)
+      if (comboCount >= 5) bonusXP = 10;
       else if (comboCount >= 3) bonusXP = 5;
 
       addXP(baseXP + bonusXP);
@@ -854,7 +927,7 @@
     }
 
     function handleWrongAnswer(item, correctText) {
-      comboCount = 0; updateComboUI(); // 答錯重置 Combo
+      comboCount = 0; updateComboUI();
       wrongWords.push(item);
       pData.wrongMemory[item.en] = 0; savePlayerData();
       feedback.textContent = `❌ 正確答案是：${correctText}`; feedback.className = 'feedback incorrect';
